@@ -1,0 +1,303 @@
+/* =========================================================
+   screens.css — 各画面固有のレイアウト
+   ========================================================= */
+
+/* ================= S1 設定画面 ================= */
+.lcd-title{ text-align:center; padding:22px 18px; }
+.game-title{
+  margin:0; font-size:34px; font-weight:800; letter-spacing:.04em;
+  color:#eaffe6; text-shadow:0 0 14px rgba(150,255,150,.55);
+}
+.game-title-sub{ display:block; font-size:20px; letter-spacing:.4em; margin-top:4px; color:var(--lcd-dim); }
+.game-lead{ margin-top:12px !important; font-size:13px; color:var(--lcd-dim); line-height:1.7; }
+
+.era-list{ margin-top:12px; }
+.era-list[hidden]{ display:none; }
+.era-buttons{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.era-buttons .btn{ font-size:14px; padding:11px 8px; }
+.range-note{
+  margin:12px 0 0; padding:8px 10px;
+  background:#fff8d8; border:2px solid #e6d48a; border-radius:8px;
+  font-size:14px; font-weight:700; text-align:center; color:#7a5c00;
+}
+
+/* プレイヤー行 */
+.players{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.player-row{
+  display:flex; align-items:center; gap:8px;
+  background:#fff; border:2px solid var(--paper-line); border-radius:10px;
+  padding:8px 10px;
+}
+.player-no{
+  flex:0 0 auto; width:26px; height:26px; border-radius:50%;
+  background:var(--dex-red); color:#fff; font-size:13px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+}
+.player-name{
+  flex:1 1 auto; min-width:0;
+  border:none; border-bottom:2px dotted #ccc; padding:6px 2px;
+  font-size:16px; background:transparent;
+}
+.player-name:focus{ outline:none; border-bottom-color:var(--dex-red); }
+.remote-toggle{
+  flex:0 0 auto;
+  display:flex; align-items:center; gap:4px;
+  font-size:11px; font-weight:700; color:#888;
+  border:2px solid #ddd; border-radius:999px; padding:5px 9px;
+  background:#fafafa; cursor:pointer; user-select:none;
+}
+.remote-toggle.is-on{ background:#e3f4ff; border-color:#4fc3f7; color:#0d6f96; }
+.btn-del{
+  flex:0 0 auto; width:32px; height:32px; padding:0;
+  border-radius:50%; font-size:16px; font-weight:800;
+  background:#ffe9e9; border:2px solid #e5b5b5; box-shadow:0 3px 0 #c99;
+  display:flex; align-items:center; justify-content:center;
+}
+
+.btn-dice{ background:linear-gradient(180deg,#fff,#efe6ff); }
+.dice-face{ font-size:22px; display:inline-block; }
+.dice-face.is-rolling{ animation:diceRoll .12s steps(1) infinite; }
+@keyframes diceRoll{ 0%{transform:rotate(-14deg) scale(1.1);} 50%{transform:rotate(16deg) scale(.95);} 100%{transform:rotate(-14deg) scale(1.1);} }
+.order-result{
+  margin-top:10px; padding:10px;
+  background:#eef8ff; border:2px solid #b7ddf5; border-radius:10px;
+  font-size:14px; line-height:1.8;
+}
+.order-result[hidden]{ display:none; }
+.order-result b{ color:var(--dex-red-dark); }
+
+.timer-settings{ margin-top:12px; }
+.timer-settings[hidden]{ display:none; }
+.slider-row{ display:block; margin:12px 0; font-size:14px; font-weight:700; }
+.slider-row b{ color:var(--dex-red-dark); font-size:18px; }
+.slider-row input[type=range]{ width:100%; margin-top:6px; accent-color:var(--dex-red); height:32px; }
+
+.accordion summary{ cursor:pointer; list-style:none; }
+.accordion summary::-webkit-details-marker{ display:none; }
+.accordion summary::after{ content:"　▼"; font-size:12px; color:#999; }
+.accordion[open] summary::after{ content:"　▲"; }
+.howto-list{ margin:6px 0; padding-left:1.3em; font-size:13.5px; line-height:1.9; }
+.howto-note{ margin:10px 0 0; font-size:13px; line-height:1.8; color:#555; }
+
+/* ================= S1.5 読み込み ================= */
+.lcd-loading{ text-align:center; padding:26px 18px; }
+.loading-title{ font-size:18px; font-weight:700; }
+.loading-count{ margin-top:10px !important; font-size:32px; font-weight:800; letter-spacing:.05em; }
+.loadbar{
+  margin-top:14px; height:16px; border-radius:999px;
+  background:rgba(0,0,0,.45); overflow:hidden; border:2px solid rgba(255,255,255,.25);
+}
+.loadbar-fill{ height:100%; width:0; background:linear-gradient(90deg,#7ef08a,#b6f5b0); transition:width .3s; }
+.loading-note{ margin-top:14px !important; font-size:12px; color:var(--lcd-dim); line-height:1.7; }
+.pokeball-spin{
+  width:64px; height:64px; margin:22px auto;
+  border-radius:50%;
+  background:linear-gradient(180deg,#e94b4b 0 47%, #222 47% 53%, #fff 53% 100%);
+  border:3px solid #222;
+  box-shadow:0 4px 10px rgba(0,0,0,.4);
+  position:relative;
+  animation:ballSpin 1.1s linear infinite;
+}
+.pokeball-spin::after{
+  content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:20px; height:20px; border-radius:50%; background:#fff; border:3px solid #222;
+}
+@keyframes ballSpin{ to{ transform:rotate(360deg); } }
+
+/* ================= S2 お絵描き ================= */
+.turn-label{
+  margin:0 0 10px; color:#fff; font-size:16px; font-weight:700;
+  text-shadow:0 2px 0 rgba(0,0,0,.3);
+  display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+}
+.turn-label b{ font-size:20px; }
+.turn-count{ margin-left:auto; font-size:13px; opacity:.85; }
+
+.lcd-flavor{ padding:14px 16px; }
+.flavor-meta{ font-size:11.5px; color:var(--lcd-dim); letter-spacing:.05em; }
+.flavor-text{
+  margin-top:8px !important;
+  font-family:var(--font-lcd);
+  font-size:19px; line-height:1.95; letter-spacing:.04em;
+  white-space:pre-wrap;
+  text-shadow:0 0 8px rgba(140,255,140,.35);
+}
+.flavor-text .masked{ color:#ffe58a; text-shadow:0 0 10px rgba(255,220,110,.7); }
+
+.timerbar{
+  position:relative; height:20px; margin:10px 0;
+  background:rgba(0,0,0,.35); border-radius:999px; overflow:hidden;
+  border:2px solid rgba(255,255,255,.3);
+}
+.timerbar[hidden]{ display:none; }
+.timerbar-fill{ height:100%; width:100%; background:linear-gradient(90deg,#7ef08a,#ffe37a); transition:width .25s linear; }
+.timerbar.is-warn .timerbar-fill{ background:linear-gradient(90deg,#ff9a4a,#ff5252); }
+.timerbar-num{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+
+.canvas-wrap{
+  margin:10px 0;
+  background:#fff;
+  border:4px solid #fff;
+  border-radius:12px;
+  box-shadow:inset 0 0 0 2px #ddd, 0 4px 0 rgba(0,0,0,.25);
+  overflow:hidden;
+  touch-action:none;
+}
+#drawCanvas{ display:block; width:100%; height:auto; background:#fff; cursor:crosshair; }
+
+.tools{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+.tool-group{
+  display:flex; gap:6px; flex-wrap:wrap;
+  background:rgba(255,255,255,.16); padding:6px; border-radius:12px;
+}
+.btn-tool{
+  width:auto; min-width:52px; padding:9px 11px; font-size:13px;
+  box-shadow:0 3px 0 var(--btn-shadow);
+}
+.btn-tool.is-on{ background:linear-gradient(180deg,#9fe6ff,#4fc3f7); border-color:#0d6f96; box-shadow:0 3px 0 #1f7fa5; }
+.btn-color{ width:42px; height:42px; min-width:0; padding:0; border-radius:50%; border:3px solid #fff; }
+.btn-color.is-on{ box-shadow:0 0 0 3px #ffdf5e, 0 3px 0 rgba(0,0,0,.3); transform:scale(1.06); }
+.dot{ display:block; border-radius:50%; background:#333; margin:0 auto; }
+.dot-s{ width:6px; height:6px; }
+.dot-m{ width:12px; height:12px; }
+.dot-l{ width:20px; height:20px; }
+
+/* ================= S3 クイズ ================= */
+.answer-image{
+  background:#fff; border:4px solid #fff; border-radius:12px;
+  box-shadow:0 4px 0 rgba(0,0,0,.25);
+  overflow:hidden; margin-bottom:10px;
+}
+.answer-image img{ display:block; width:100%; height:auto; }
+.answer-area{
+  background:var(--paper); border:3px solid rgba(0,0,0,.2); border-radius:var(--radius);
+  padding:14px; box-shadow:0 3px 0 rgba(0,0,0,.2);
+}
+.answerer-label{ margin:0 0 8px; font-size:15px; font-weight:800; color:var(--dex-red-dark); }
+.answerer-label .proxy{ font-size:12px; color:#0d6f96; margin-left:6px; }
+.answer-input{
+  width:100%; padding:14px 12px;
+  font-size:22px; font-weight:700; text-align:center;
+  border:3px solid #ccc; border-radius:10px; background:#fff;
+}
+.answer-input:focus{ outline:none; border-color:var(--dex-red); }
+
+/* ================= S4 正解発表 ================= */
+.dexcard{
+  display:grid; grid-template-columns:minmax(140px,38%) 1fr; gap:14px;
+  background:var(--paper); border:3px solid rgba(0,0,0,.2); border-radius:var(--radius);
+  padding:14px; box-shadow:0 3px 0 rgba(0,0,0,.2);
+}
+.dexcard-img{
+  position:relative; aspect-ratio:1/1;
+  background:linear-gradient(180deg,#eef3f6,#d9e3ea);
+  border:3px solid #fff; border-radius:12px; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.15);
+}
+.dexcard-img img{ width:100%; height:100%; object-fit:contain; display:none; }
+.dexcard-img.has-img img{ display:block; }
+.dexcard-img.has-img .dexcard-img-fallback{ display:none; }
+.dexcard-img-fallback{ font-size:64px; font-weight:800; color:#9fb0bb; }
+.dexcard-info{ display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; }
+.dexcard-no{ margin:0; font-size:14px; font-weight:800; color:#8a8a8a; letter-spacing:.08em; }
+.dexcard-name{ margin:0; font-size:34px; font-weight:800; color:var(--dex-red-dark); line-height:1.15; word-break:break-all; }
+.dexcard-genus{ margin:0; font-size:15px; color:#555; }
+.dexcard-types{ margin:6px 0 0; display:flex; gap:6px; flex-wrap:wrap; }
+.type-chip{
+  display:inline-block; padding:4px 12px; border-radius:999px;
+  font-size:13px; font-weight:800; color:#fff;
+  border:2px solid rgba(0,0,0,.18); text-shadow:0 1px 1px rgba(0,0,0,.35);
+}
+.lcd-reveal{ margin-top:12px; }
+.lcd-reveal .flavor-text{ font-size:16px; }
+
+.reveal-drawing{
+  margin-top:12px; background:var(--paper);
+  border:3px solid rgba(0,0,0,.2); border-radius:var(--radius); padding:12px;
+}
+.reveal-drawing-label{ margin:0 0 8px; font-size:13px; font-weight:700; color:#666; }
+.reveal-drawing img{ display:block; width:100%; max-width:340px; margin:0 auto; border:2px solid #ddd; border-radius:10px; background:#fff; }
+
+.results{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.result-row{
+  display:flex; align-items:center; gap:10px;
+  background:#fff; border:3px solid #ddd; border-radius:12px; padding:10px 12px;
+}
+.result-row.is-ok{ border-color:#8fd8a0; background:#f2fff5; }
+.result-row.is-ng{ border-color:#f0b3b3; background:#fff6f6; }
+.result-mark{ font-size:26px; font-weight:800; width:34px; text-align:center; flex:0 0 auto; }
+.result-row.is-ok .result-mark{ color:var(--ok); }
+.result-row.is-ng .result-mark{ color:var(--ng); }
+.result-who{ font-size:14px; font-weight:800; flex:0 0 auto; min-width:5em; }
+.result-ans{ font-size:16px; flex:1 1 auto; word-break:break-all; color:#333; }
+.result-ans .empty{ color:#aaa; }
+.btn-flip{
+  width:auto; flex:0 0 auto; padding:8px 12px; font-size:12px;
+  box-shadow:0 3px 0 var(--btn-shadow);
+}
+.coop-record{
+  margin:12px 0 0; text-align:center; font-size:16px; font-weight:800;
+  color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.3);
+}
+.coop-record[hidden]{ display:none; }
+
+/* ================= S5 結果発表 ================= */
+.result-title{
+  margin:6px 0 16px; text-align:center; font-size:30px; font-weight:800;
+  color:var(--gold); text-shadow:0 3px 0 rgba(0,0,0,.35), 0 0 20px rgba(255,207,63,.5);
+}
+.podium{
+  display:flex; align-items:flex-end; justify-content:center; gap:10px;
+  margin-bottom:18px; min-height:170px;
+}
+.podium-col{ flex:1 1 0; max-width:150px; text-align:center; }
+.podium-crown{ font-size:26px; }
+.podium-name{
+  font-size:15px; font-weight:800; color:#fff; margin:2px 0 6px;
+  text-shadow:0 2px 0 rgba(0,0,0,.35); word-break:break-all;
+}
+.podium-title{ font-size:11px; color:#ffe58a; margin-bottom:4px; }
+.podium-bar{
+  border-radius:10px 10px 0 0; border:3px solid rgba(0,0,0,.2); border-bottom:none;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:800; color:#5a4300;
+  animation:podiumRise .5s ease-out;
+}
+@keyframes podiumRise{ from{ transform:scaleY(.1); transform-origin:bottom; } to{ transform:none; } }
+.podium-1 .podium-bar{ height:120px; background:linear-gradient(180deg,#ffe37a,#e8b52a); }
+.podium-2 .podium-bar{ height:88px;  background:linear-gradient(180deg,#f2f2f2,#c2c8cc); }
+.podium-3 .podium-bar{ height:64px;  background:linear-gradient(180deg,#f2d0a8,#c98d4f); }
+
+.rank-block{
+  background:var(--paper); border:3px solid rgba(0,0,0,.2); border-radius:var(--radius);
+  padding:12px; margin:12px 0; box-shadow:0 3px 0 rgba(0,0,0,.2);
+}
+.rank-title{ margin:0 0 8px; font-size:15px; font-weight:800; color:var(--dex-red-dark);
+  border-bottom:2px dotted var(--paper-line); padding-bottom:6px; }
+.rank-list{ display:flex; flex-direction:column; gap:6px; }
+.rank-row{ display:flex; align-items:center; gap:10px; font-size:15px; padding:6px 4px; border-bottom:1px dotted #e0dccd; }
+.rank-row:last-child{ border-bottom:none; }
+.rank-pos{ flex:0 0 auto; width:2.2em; font-weight:800; color:#8a8a8a; }
+.rank-row.top .rank-pos{ color:var(--gold); text-shadow:0 1px 0 rgba(0,0,0,.25); }
+.rank-name{ flex:1 1 auto; font-weight:700; word-break:break-all; }
+.rank-badge{ flex:0 0 auto; font-size:11px; color:#0d6f96; }
+.rank-score{ flex:0 0 auto; font-weight:800; font-size:17px; color:var(--dex-red-dark); }
+.rank-2col{ align-items:start; }
+
+/* ================= 横向き iPad 最適化 ================= */
+@media (min-width:820px) and (orientation:landscape){
+  .canvas-wrap{ max-height:56vh; }
+  #drawCanvas{ max-height:56vh; object-fit:contain; }
+  .answer-image img{ max-height:46vh; object-fit:contain; }
+}
+@media (max-width:560px){
+  .era-buttons{ grid-template-columns:1fr; }
+  .dexcard{ grid-template-columns:1fr; }
+  .dexcard-name{ font-size:28px; }
+  .game-title{ font-size:26px; }
+  .result-row{ flex-wrap:wrap; }
+}

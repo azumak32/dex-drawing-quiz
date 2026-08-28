@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#c62828">
+<title>ポケモン図鑑クイズ</title>
+<link rel="stylesheet" href="css/dex.css">
+<link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+
+<div class="dex" id="dex">
+
+  <!-- ===== 図鑑ヘッダー（ランプ類） ===== -->
+  <div class="dex-top">
+    <div class="lamp-big"><span class="lamp-big-glare"></span></div>
+    <div class="lamp-mini lamp-red"></div>
+    <div class="lamp-mini lamp-yellow"></div>
+    <div class="lamp-mini lamp-green"></div>
+    <div class="dex-top-title" id="dexTopTitle">ポケモン図鑑クイズ</div>
+    <div class="dex-top-status" id="dexTopStatus"></div>
+  </div>
+
+  <!-- ===== デバッグ用ナビ（?debug=1 のときだけ表示） ===== -->
+  <nav class="debugnav" id="debugNav" hidden>
+    <button type="button" data-goto="s1">S1 設定</button>
+    <button type="button" data-goto="s15">S1.5 読込</button>
+    <button type="button" data-goto="s2">S2 お絵描き</button>
+    <button type="button" data-goto="s3">S3 クイズ</button>
+    <button type="button" data-goto="s4">S4 正解</button>
+    <button type="button" data-goto="s5">S5 結果</button>
+  </nav>
+
+  <main class="dex-body" id="screens">
+
+    <!-- ================= S1 モード選択 & プレイヤー登録 ================= -->
+    <section class="screen is-active" id="s1">
+      <div class="lcd lcd-title">
+        <h1 class="game-title">ポケモン図鑑<span class="game-title-sub">クイズ</span></h1>
+        <p class="game-lead">図鑑の解説文だけを見て絵を描き、みんなでポケモンを当てよう！</p>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnQuickStart">▶ すぐに始める</button>
+      <p class="hint hint-center">えらんだ出題範囲・協力モード・時間制限なしで、すぐに1問はじまります。</p>
+
+      <!-- 出題範囲 -->
+      <div class="panel">
+        <h2 class="panel-title">① 出題範囲</h2>
+        <div class="row-2">
+          <button type="button" class="btn btn-choice" id="btnRangeEra" data-range="era">あの頃のポケモンモード</button>
+          <button type="button" class="btn btn-choice is-on" id="btnRangeMaster" data-range="master">ポケモンマスターモード<small>（全898種）</small></button>
+        </div>
+        <div class="era-list" id="eraList" hidden>
+          <p class="hint">その時点までに登場した全ポケモンから出題します（累積方式）。</p>
+          <div class="era-buttons" id="eraButtons"></div>
+        </div>
+        <p class="range-note" id="rangeNote">出題範囲：全国図鑑 No.1〜898（全898種）</p>
+        <p class="hint">日本語の図鑑解説文は No.1〜898（ソード・シールドまで）にのみ存在するため、出題はこの範囲です。</p>
+      </div>
+
+      <!-- プレイヤー登録 -->
+      <div class="panel">
+        <h2 class="panel-title">② プレイヤー登録<small>（最大10人・対戦モードで使用）</small></h2>
+        <div class="players" id="playerList"></div>
+        <div class="row-2">
+          <button type="button" class="btn" id="btnAddPlayer">＋ プレイヤーを追加</button>
+          <button type="button" class="btn btn-dice" id="btnDice"><span class="dice-face" id="diceFace">🎲</span> 順番をきめる</button>
+        </div>
+        <p class="hint">「リモート」を ON にすると、その人の解答画面に「（代理入力）」と表示されます（ビデオ通話参加者用）。</p>
+        <div class="order-result" id="orderResult" hidden></div>
+      </div>
+
+      <!-- モード -->
+      <div class="panel">
+        <h2 class="panel-title">③ あそびかた</h2>
+        <div class="row-2">
+          <button type="button" class="btn btn-choice is-on" id="btnModeVs" data-mode="vs">対戦モード<small>ひとりずつ解答・ランキングあり</small></button>
+          <button type="button" class="btn btn-choice" id="btnModeCoop" data-mode="coop">協力モード<small>みんなで相談して1つの答え</small></button>
+        </div>
+      </div>
+
+      <!-- 時間制限 -->
+      <div class="panel">
+        <h2 class="panel-title">④ 時間制限</h2>
+        <div class="row-2">
+          <button type="button" class="btn btn-choice is-on" id="btnTimerOff" data-timer="off">なし</button>
+          <button type="button" class="btn btn-choice" id="btnTimerOn" data-timer="on">あり</button>
+        </div>
+        <div class="timer-settings" id="timerSettings" hidden>
+          <label class="slider-row">
+            <span>お絵描き <b id="drawSecLabel">90</b> 秒</span>
+            <input type="range" id="drawSec" min="30" max="300" step="10" value="90">
+          </label>
+          <label class="slider-row">
+            <span>解答 <b id="answerSecLabel">30</b> 秒</span>
+            <input type="range" id="answerSec" min="10" max="120" step="5" value="30">
+          </label>
+        </div>
+      </div>
+
+      <!-- 説明 -->
+      <details class="panel accordion" id="howto" open>
+        <summary class="panel-title">遊びかた・モード説明</summary>
+        <ol class="howto-list">
+          <li>出題者ひとりが、ポケモンの<b>図鑑解説文だけ</b>を見ます（名前と図鑑Noは伏せられています）。</li>
+          <li>出題者はその文章をヒントに、そのポケモンの絵を描きます。</li>
+          <li>ほかの人は絵を見て、どのポケモンかを当てます。</li>
+          <li>全員が1回ずつ出題者を担当したら結果発表です。</li>
+        </ol>
+        <p class="howto-note"><b>対戦モード</b>：解答者はひとりずつ順番に答えます。前の人の答えは見えません。<br>
+          点数は「<b>解答力</b>＝自分が当てた数」と「<b>伝達力</b>＝自分の絵で当ててもらえた人数」の合計です。</p>
+        <p class="howto-note"><b>協力モード</b>：みんなで相談して答えをひとつ出します。チームで何問正解できるかに挑戦。</p>
+      </details>
+
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnStartGame">この設定でゲーム開始</button>
+    </section>
+
+    <!-- ================= S1.5 プリフェッチ ================= -->
+    <section class="screen" id="s15">
+      <div class="lcd lcd-loading">
+        <p class="loading-title">図鑑データを読み込み中…</p>
+        <p class="loading-count" id="loadingCount">0 / 0</p>
+        <div class="loadbar"><div class="loadbar-fill" id="loadingBar"></div></div>
+        <p class="loading-note" id="loadingNote">通信は今だけ。読み込みが終われば、途中でネットが切れても最後まで遊べます。</p>
+      </div>
+      <div class="pokeball-spin" id="loadingBall" aria-hidden="true"></div>
+      <button type="button" class="btn" id="btnLoadingCancel">中止して設定に戻る</button>
+    </section>
+
+    <!-- ================= S2 お絵描き ================= -->
+    <section class="screen" id="s2">
+      <div class="drawer-head">
+        <p class="turn-label">出題者：<b id="drawerName">—</b><span class="turn-count" id="turnCount"></span></p>
+        <div class="lcd lcd-flavor">
+          <p class="flavor-meta" id="flavorMeta">ポケットモンスター</p>
+          <p class="flavor-text" id="flavorText">…</p>
+        </div>
+      </div>
+      <div class="timerbar" id="drawTimerWrap" hidden><div class="timerbar-fill" id="drawTimerFill"></div><span class="timerbar-num" id="drawTimerNum"></span></div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="drawCanvas"></canvas>
+      </div>
+
+      <div class="tools">
+        <div class="tool-group" id="colorTools"></div>
+        <div class="tool-group" id="sizeTools">
+          <button type="button" class="btn btn-tool is-on" data-size="1"><span class="dot dot-s"></span></button>
+          <button type="button" class="btn btn-tool" data-size="2"><span class="dot dot-m"></span></button>
+          <button type="button" class="btn btn-tool" data-size="3"><span class="dot dot-l"></span></button>
+        </div>
+        <div class="tool-group">
+          <button type="button" class="btn btn-tool" id="btnEraser">消しゴム</button>
+          <button type="button" class="btn btn-tool" id="btnUndo">ひとつ戻す</button>
+          <button type="button" class="btn btn-tool" id="btnClear">全消し</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnDrawDone">できた！</button>
+    </section>
+
+    <!-- ================= S3 クイズ ================= -->
+    <section class="screen" id="s3">
+      <p class="turn-label">この絵のポケモンは？<span class="turn-count" id="quizTurnCount"></span></p>
+      <div class="answer-image"><img id="quizImage" alt="出題者が描いたイラスト"></div>
+      <div class="timerbar" id="answerTimerWrap" hidden><div class="timerbar-fill" id="answerTimerFill"></div><span class="timerbar-num" id="answerTimerNum"></span></div>
+      <div class="answer-area">
+        <p class="answerer-label" id="answererLabel">こたえ</p>
+        <input type="text" id="answerInput" class="answer-input" placeholder="ポケモンの名前" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+        <button type="button" class="btn btn-primary btn-jumbo" id="btnAnswerNext">こたえる</button>
+        <button type="button" class="btn" id="btnAnswerSkip">わからない（パス）</button>
+      </div>
+    </section>
+
+    <!-- ================= S4 正解発表 ================= -->
+    <section class="screen" id="s4">
+      <div class="dexcard">
+        <div class="dexcard-img" id="revealImgWrap">
+          <img id="revealImg" alt="">
+          <div class="dexcard-img-fallback" id="revealImgFallback">？</div>
+        </div>
+        <div class="dexcard-info">
+          <p class="dexcard-no" id="revealNo">No.—</p>
+          <p class="dexcard-name" id="revealName">—</p>
+          <p class="dexcard-genus" id="revealGenus">—</p>
+          <p class="dexcard-types" id="revealTypes"></p>
+        </div>
+      </div>
+      <div class="lcd lcd-flavor lcd-reveal">
+        <p class="flavor-meta" id="revealMeta"></p>
+        <p class="flavor-text" id="revealFlavor"></p>
+      </div>
+      <div class="reveal-drawing">
+        <p class="reveal-drawing-label">出題者 <b id="revealDrawer">—</b> のイラスト</p>
+        <img id="revealDrawing" alt="出題者が描いたイラスト">
+      </div>
+      <div class="results" id="revealResults"></div>
+      <p class="coop-record" id="coopRecord" hidden></p>
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnRevealNext">次の出題へ</button>
+    </section>
+
+    <!-- ================= S5 結果発表 ================= -->
+    <section class="screen" id="s5">
+      <h2 class="result-title">けっか はっぴょう！</h2>
+      <div class="podium" id="podium"></div>
+      <div class="rank-block">
+        <h3 class="rank-title">総合ランキング</h3>
+        <div class="rank-list" id="rankTotal"></div>
+      </div>
+      <div class="row-2 rank-2col">
+        <div class="rank-block">
+          <h3 class="rank-title">解答力（当てた数）</h3>
+          <div class="rank-list" id="rankAnswer"></div>
+        </div>
+        <div class="rank-block">
+          <h3 class="rank-title">伝達力（当てさせた数）</h3>
+          <div class="rank-list" id="rankDraw"></div>
+        </div>
+      </div>
+      <div class="row-2">
+        <button type="button" class="btn btn-primary" id="btnPlayAgain">同じメンバーでもう一度</button>
+        <button type="button" class="btn" id="btnBackToSetup">設定画面に戻る</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== 権利表記フッター（全画面共通） ===== -->
+  <footer class="legal">
+    <p>ポケットモンスター・ポケモン・Pokémon は 任天堂・クリーチャーズ・ゲームフリーク の登録商標です。</p>
+    <p>©1995-2026 Nintendo / Creatures Inc. / GAME FREAK inc.</p>
+    <p>本サイトはファンによる非公式・非営利の制作物であり、任天堂株式会社・株式会社ポケモン・株式会社クリーチャーズ・株式会社ゲームフリーク とは一切関係ありません。</p>
+    <p>図鑑データの取得に PokéAPI (https://pokeapi.co) を利用しています。</p>
+  </footer>
+</div>
+
+<!-- ===== インタースティシャル（次の人の番です） ===== -->
+<div class="overlay" id="interstitial" hidden>
+  <div class="overlay-box">
+    <p class="overlay-lead">つぎは</p>
+    <p class="overlay-name" id="interName">—</p>
+    <p class="overlay-lead" id="interRole">さんの番です</p>
+    <p class="overlay-note" id="interNote"></p>
+    <button type="button" class="btn btn-primary btn-jumbo" id="btnInterOk">準備OK</button>
+  </div>
+</div>
+
+<!-- ===== リロード復帰ダイアログ ===== -->
+<div class="overlay" id="resumeDialog" hidden>
+  <div class="overlay-box">
+    <p class="overlay-lead">前回のゲームが残っています</p>
+    <p class="overlay-note" id="resumeNote"></p>
+    <button type="button" class="btn btn-primary btn-jumbo" id="btnResumeYes">続きから再開する</button>
+    <button type="button" class="btn" id="btnResumeNo">最初から始める</button>
+  </div>
+</div>
+
+<!-- ===== トースト ===== -->
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/state.js"></script>
+<script src="js/dexdata.js"></script>
+<script src="js/pokeapi.js"></script>
+<script src="js/judge.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

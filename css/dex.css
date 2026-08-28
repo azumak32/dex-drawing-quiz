@@ -1,0 +1,256 @@
+/* =========================================================
+   dex.css — 図鑑筐体デザイン（全画面共通パーツ）
+   ========================================================= */
+
+:root{
+  --dex-red:       #d02b2b;
+  --dex-red-dark:  #9c1a1a;
+  --dex-red-light: #ee5b52;
+  --dex-black:     #2b2b2b;
+  --lcd-bg:        #24402c;
+  --lcd-bg2:       #1b3122;
+  --lcd-text:      #b6f5b0;
+  --lcd-dim:       #6fbf78;
+  --ink:           #232323;
+  --paper:         #f5f1e6;
+  --paper-line:    #ded6c0;
+  --btn-face:      #f0ece0;
+  --btn-shadow:    #b3ab97;
+  --gold:          #ffcf3f;
+  --ok:            #2e9e4b;
+  --ng:            #cf3a3a;
+  --radius:        14px;
+  --font-round: "Hiragino Maru Gothic ProN", "ヒラギノ丸ゴ ProN W4",
+                "Hiragino Maru Gothic Pro", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --font-lcd: "Hiragino Maru Gothic ProN", "SF Mono", "Osaka-Mono", monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body{
+  margin:0; padding:0;
+  height:100%;
+  background:#7d1717;
+  color:var(--ink);
+  font-family:var(--font-round);
+  -webkit-text-size-adjust:100%;
+  overscroll-behavior:none;
+}
+body{
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* iPad の誤スクロール・引っぱり更新を抑止（入力欄だけは許可） */
+body{ touch-action: manipulation; }
+canvas{ touch-action: none; }
+
+button, input, select, textarea{ font-family:inherit; font-size:16px; color:inherit; }
+button{ -webkit-tap-highlight-color: transparent; }
+
+/* ---------------- 図鑑本体 ---------------- */
+.dex{
+  max-width:1100px;
+  margin:0 auto;
+  min-height:100%;
+  background:
+    linear-gradient(180deg, var(--dex-red-light) 0%, var(--dex-red) 12%, var(--dex-red) 88%, var(--dex-red-dark) 100%);
+  border-left:4px solid rgba(0,0,0,.18);
+  border-right:4px solid rgba(0,0,0,.18);
+  display:flex; flex-direction:column;
+  box-shadow:0 0 40px rgba(0,0,0,.4);
+}
+
+/* ---------------- 上部ランプ ---------------- */
+.dex-top{
+  position:relative;
+  display:flex; align-items:center; gap:10px;
+  padding:12px 16px 10px;
+  border-bottom:4px solid var(--dex-red-dark);
+  background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.05));
+}
+.lamp-big{
+  position:relative;
+  width:52px; height:52px; border-radius:50%;
+  background:radial-gradient(circle at 32% 28%, #bfe9ff 0%, #4aa8e8 45%, #1668b0 100%);
+  border:5px solid #f2f2f2;
+  box-shadow:0 0 0 3px rgba(0,0,0,.25), 0 0 18px 3px rgba(90,190,255,.55);
+  animation:lampBlink 3.2s ease-in-out infinite;
+  flex:0 0 auto;
+}
+.lamp-big-glare{
+  position:absolute; left:9px; top:6px;
+  width:18px; height:12px; border-radius:50%;
+  background:rgba(255,255,255,.85);
+  transform:rotate(-25deg);
+}
+@keyframes lampBlink{
+  0%,100%{ box-shadow:0 0 0 3px rgba(0,0,0,.25), 0 0 10px 2px rgba(90,190,255,.35); }
+  50%    { box-shadow:0 0 0 3px rgba(0,0,0,.25), 0 0 26px 7px rgba(120,210,255,.85); }
+}
+.lamp-mini{
+  width:16px; height:16px; border-radius:50%;
+  border:2px solid rgba(0,0,0,.3);
+  flex:0 0 auto;
+}
+.lamp-red   { background:radial-gradient(circle at 35% 30%, #ffb3b3, #e03b3b); }
+.lamp-yellow{ background:radial-gradient(circle at 35% 30%, #fff0a8, #e0c43b); }
+.lamp-green { background:radial-gradient(circle at 35% 30%, #b6ffb8, #35b34a); animation:lampGreen 1.6s steps(1) infinite; }
+@keyframes lampGreen{ 0%,60%{ filter:none; } 61%,100%{ filter:brightness(.55); } }
+
+.dex-top-title{
+  margin-left:8px;
+  font-weight:700; font-size:15px; letter-spacing:.06em;
+  color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.28);
+}
+.dex-top-status{
+  margin-left:auto;
+  font-size:12px; color:#ffe3e3; text-shadow:0 1px 0 rgba(0,0,0,.3);
+}
+
+/* ---------------- 画面領域 ---------------- */
+.dex-body{
+  flex:1 1 auto;
+  padding:14px 16px 18px;
+}
+.screen{ display:none; }
+.screen.is-active{ display:block; animation:screenIn .22s ease-out; }
+@keyframes screenIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+
+/* ---------------- 液晶パネル ---------------- */
+.lcd{
+  position:relative;
+  background:linear-gradient(180deg, var(--lcd-bg) 0%, var(--lcd-bg2) 100%);
+  border:4px solid #d8d8d8;
+  border-radius:10px;
+  box-shadow:inset 0 0 22px rgba(0,0,0,.55), 0 3px 0 rgba(0,0,0,.25);
+  color:var(--lcd-text);
+  padding:16px 18px;
+  overflow:hidden;
+}
+.lcd::after{  /* スキャンライン */
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(180deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+  mix-blend-mode:multiply;
+}
+.lcd p{ margin:0; }
+
+/* ---------------- ボタン（物理ボタン風） ---------------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  flex-direction:column;
+  width:100%;
+  padding:13px 14px;
+  background:linear-gradient(180deg, #ffffff 0%, var(--btn-face) 100%);
+  color:var(--ink);
+  border:2px solid rgba(0,0,0,.22);
+  border-radius:var(--radius);
+  box-shadow:0 5px 0 var(--btn-shadow), 0 6px 10px rgba(0,0,0,.22);
+  font-weight:700; font-size:16px; line-height:1.35;
+  cursor:pointer;
+  transition:transform .06s, box-shadow .06s, background .15s;
+  text-align:center;
+}
+.btn small{ display:block; font-weight:500; font-size:12px; opacity:.72; margin-top:2px; }
+.btn:active{ transform:translateY(4px); box-shadow:0 1px 0 var(--btn-shadow), 0 2px 4px rgba(0,0,0,.25); }
+.btn:disabled{ opacity:.5; box-shadow:0 2px 0 var(--btn-shadow); cursor:default; }
+
+.btn-primary{
+  background:linear-gradient(180deg, #ffe37a 0%, var(--gold) 100%);
+  border-color:rgba(0,0,0,.3);
+  box-shadow:0 5px 0 #c69a12, 0 6px 12px rgba(0,0,0,.28);
+}
+.btn-primary:active{ box-shadow:0 1px 0 #c69a12, 0 2px 4px rgba(0,0,0,.3); }
+.btn-jumbo{ font-size:19px; padding:17px 16px; margin:12px 0 4px; }
+
+.btn-choice.is-on{
+  background:linear-gradient(180deg, #9fe6ff 0%, #4fc3f7 100%);
+  border-color:#0d6f96;
+  box-shadow:0 5px 0 #1f7fa5, 0 6px 12px rgba(0,0,0,.25);
+}
+.btn-danger{ background:linear-gradient(180deg,#ffd0d0,#ff9a9a); box-shadow:0 4px 0 #b35555; }
+
+/* ---------------- パネル（白カード） ---------------- */
+.panel{
+  background:var(--paper);
+  border:3px solid rgba(0,0,0,.2);
+  border-radius:var(--radius);
+  padding:14px;
+  margin:14px 0;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.8), 0 3px 0 rgba(0,0,0,.2);
+}
+.panel-title{
+  margin:0 0 10px; font-size:16px; font-weight:800; color:var(--dex-red-dark);
+  border-bottom:2px dotted var(--paper-line); padding-bottom:6px;
+}
+.panel-title small{ font-weight:500; font-size:12px; color:#7a7a7a; margin-left:6px; }
+
+.row-2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.hint{ margin:8px 0 0; font-size:12px; line-height:1.6; color:#6b6b6b; }
+.hint-center{ text-align:center; color:#ffe0e0; }
+
+/* ---------------- フッター（権利表記） ---------------- */
+.legal{
+  margin-top:auto;
+  padding:14px 16px calc(16px + env(safe-area-inset-bottom));
+  background:rgba(0,0,0,.22);
+  border-top:3px solid var(--dex-red-dark);
+  color:#ffdede;
+  font-size:10.5px; line-height:1.7;
+}
+.legal p{ margin:0; }
+
+/* ---------------- オーバーレイ ---------------- */
+.overlay{
+  position:fixed; inset:0; z-index:50;
+  background:rgba(20,4,4,.86);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+.overlay[hidden]{ display:none; }
+.overlay-box{
+  width:100%; max-width:460px;
+  background:var(--paper);
+  border:4px solid #fff; border-radius:20px;
+  padding:26px 22px;
+  text-align:center;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);
+}
+.overlay-lead{ margin:0; font-size:16px; color:#666; }
+.overlay-name{ margin:6px 0; font-size:34px; font-weight:800; color:var(--dex-red-dark); word-break:break-all; }
+.overlay-note{ margin:10px 0 0; font-size:13px; color:#777; line-height:1.7; }
+.overlay-box .btn{ margin-top:14px; }
+
+/* ---------------- トースト ---------------- */
+.toast{
+  position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
+  z-index:60;
+  background:rgba(20,20,20,.92); color:#fff;
+  padding:12px 20px; border-radius:999px;
+  font-size:14px; font-weight:700;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);
+  max-width:88vw; text-align:center;
+}
+.toast[hidden]{ display:none; }
+
+/* ---------------- デバッグナビ ---------------- */
+.debugnav{
+  display:flex; gap:6px; flex-wrap:wrap;
+  padding:8px 12px; background:rgba(0,0,0,.35);
+}
+.debugnav[hidden]{ display:none; }
+.debugnav button{
+  width:auto; padding:6px 10px; font-size:12px; font-weight:700;
+  border:1px solid rgba(255,255,255,.4); border-radius:8px;
+  background:rgba(255,255,255,.14); color:#fff; box-shadow:none;
+}
+
+/* ---------------- 共通ユーティリティ ---------------- */
+.visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+/* ---------------- iPhone / 縦向き ---------------- */
+@media (max-width:560px){
+  .row-2{ grid-template-columns:1fr; }
+  .dex-body{ padding:12px 12px 16px; }
+  .btn-jumbo{ font-size:17px; }
+  .lamp-big{ width:40px; height:40px; }
+}

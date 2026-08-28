@@ -1,0 +1,12 @@
+# PokeAPI から取得した図鑑テキスト・画像はリポジトリに含めない
+cache/
+dist-offline/
+
+# macOS
+.DS_Store
+._*
+
+# 開発用の一時ファイル
+_test.html
+*.pyc
+__pycache__/
