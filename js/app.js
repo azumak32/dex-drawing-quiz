@@ -920,6 +920,77 @@ function restoreScreen() {
   }
 }
 
+/* =========================================================
+   オフライン対策（図鑑データの端末保存 / Service Worker）
+   ========================================================= */
+
+var savingAll = false;
+
+function renderOfflineStatus() {
+  var n = countCachedSpecies();
+  var el = $id('offlineStatus');
+  var bar = $id('offlineBar');
+  var pct = Math.round(n / MAX_DEX_ID * 100);
+  bar.style.width = pct + '%';
+  if (n >= MAX_DEX_ID) {
+    el.textContent = '保存済み：' + n + ' / ' + MAX_DEX_ID + ' 種 — 準備完了！ネットが無くても遊べます';
+    el.classList.add('offline-ready');
+  } else {
+    el.textContent = '保存済み：' + n + ' / ' + MAX_DEX_ID + ' 種';
+    el.classList.remove('offline-ready');
+  }
+}
+
+function startSaveAll() {
+  var btn = $id('btnSaveAll');
+  if (savingAll) {
+    // 実行中に押されたら中止
+    abortSaveAll();
+    return;
+  }
+  savingAll = true;
+  btn.textContent = '中止する';
+  $id('btnClearCache').disabled = true;
+
+  saveAllSpecies(function (done, total) {
+    var pct = Math.round(done / total * 100);
+    $id('offlineBar').style.width = pct + '%';
+    $id('offlineStatus').textContent = '保存中… ' + done + ' / ' + total + ' 種（' + pct + '%）';
+  }).then(function (res) {
+    savingAll = false;
+    btn.textContent = '図鑑データを端末に保存';
+    $id('btnClearCache').disabled = false;
+    renderOfflineStatus();
+    if (res.quota) {
+      toast('iPad の保存容量がいっぱいです。Safari の履歴を消すか、オフライン版HTMLをお使いください');
+    } else if (res.aborted) {
+      toast('保存を中止しました（続きから再開できます）');
+    } else if (res.failed) {
+      toast(res.failed + ' 件だけ取得できませんでした。もう一度押すと続きを取得します');
+    } else {
+      beep('fanfare');
+      toast('保存が完了しました。ネットが無くても遊べます');
+    }
+  }).catch(function (err) {
+    savingAll = false;
+    btn.textContent = '図鑑データを端末に保存';
+    $id('btnClearCache').disabled = false;
+    console.error(err);
+    toast('保存に失敗しました。ネット接続を確認してください');
+  });
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  // Service Worker は HTTPS（または localhost）でのみ動作する
+  var secure = location.protocol === 'https:' ||
+               location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!secure) return;
+  navigator.serviceWorker.register('sw.js').catch(function (err) {
+    console.warn('Service Worker を登録できませんでした', err);
+  });
+}
+
 /* ---------------- 初期化 ---------------- */
 function initApp() {
   // デバッグナビ
@@ -980,6 +1051,15 @@ function initApp() {
     saveState();
   });
 
+  $id('btnSaveAll').addEventListener('click', function () { beep('tap'); startSaveAll(); });
+  $id('btnClearCache').addEventListener('click', function () {
+    var n = clearSpeciesCache();
+    renderOfflineStatus();
+    beep('tap');
+    toast(n + ' 件の保存データを消しました');
+  });
+  renderOfflineStatus();
+
   $id('btnQuickStart').addEventListener('click', function () { beep('ok'); startGame(true); });
   $id('btnStartGame').addEventListener('click', function () { beep('ok'); startGame(false); });
 
@@ -1017,6 +1097,7 @@ function initApp() {
   renderTimer();
 
   DrawPad.init();
+  registerServiceWorker();
 
   // リロード復帰（続きがあれば確認ダイアログを出す）
   if (!tryResume()) {

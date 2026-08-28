@@ -102,6 +102,19 @@
         </div>
       </div>
 
+      <!-- オフライン対策 -->
+      <details class="panel accordion" id="offlinePanel">
+        <summary class="panel-title">オフライン対策<small>（当日ネットが無くても遊べるようにする）</small></summary>
+        <p class="hint">自宅の Wi-Fi につながっているうちに一度だけ押してください。898種の図鑑データを iPad の中に保存します（約3〜4分）。保存後は、ネットが無くても出題できます。</p>
+        <p class="offline-status" id="offlineStatus">保存済み：0 / 898 種</p>
+        <div class="loadbar"><div class="loadbar-fill" id="offlineBar"></div></div>
+        <div class="row-2">
+          <button type="button" class="btn btn-primary" id="btnSaveAll">図鑑データを端末に保存</button>
+          <button type="button" class="btn" id="btnClearCache">保存したデータを消す</button>
+        </div>
+        <p class="hint" id="offlineHint">※ ホーム画面に追加しておくと、アプリのように起動できます（共有ボタン →「ホーム画面に追加」）。</p>
+      </details>
+
       <!-- 説明 -->
       <details class="panel accordion" id="howto" open>
         <summary class="panel-title">遊びかた・モード説明</summary>

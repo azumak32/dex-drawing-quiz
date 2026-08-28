@@ -301,3 +301,13 @@
   .game-title{ font-size:26px; }
   .result-row{ flex-wrap:wrap; }
 }
+
+/* ================= オフライン対策パネル ================= */
+.offline-status{
+  margin:10px 0 6px; font-size:15px; font-weight:800; color:var(--dex-red-dark);
+}
+#offlinePanel .loadbar{
+  margin:0 0 12px; height:14px; background:#e3ddcb; border-color:#cfc7b0;
+}
+#offlinePanel .loadbar-fill{ background:linear-gradient(90deg,#4fc3f7,#2f9e44); }
+.offline-ready{ color:var(--ok) !important; }

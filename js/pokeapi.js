@@ -61,6 +61,8 @@ function lsSet(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (e) {
+    // 一括保存中は古いデータを捨てない（全件そろっている必要があるため）
+    if (window.__pqNoEvict) return false;
     // 容量オーバー：古い species キャッシュを半分捨ててから再挑戦
     try {
       var keys = [];
@@ -317,6 +319,96 @@ function prefetchQuestions(count, maxId, onProgress) {
   });
 
   return chain.then(function () { return questions; });
+}
+
+/* ---------------- 全種データの端末保存（オフライン対策） ----------------
+   自宅のネット環境で一度だけ実行し、898種を localStorage に保存する。
+   PokeAPI の Fair Use を守るため、1件ずつ順番に・150ms のウェイトを入れて取得する。
+   すでに保存済みの ID は再取得しない（中断しても続きから再開できる）。 */
+
+function countCachedSpecies() {
+  var n = 0;
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('pq:species:') === 0) n++;
+    }
+  } catch (e) { return 0; }
+  return n;
+}
+
+var saveAllAborted = false;
+
+function abortSaveAll() { saveAllAborted = true; }
+
+function saveAllSpecies(onProgress) {
+  saveAllAborted = false;
+  var ids = [];
+  for (var i = 1; i <= MAX_DEX_ID; i++) ids.push(i);
+
+  var done = 0;
+  var failed = 0;
+  var quotaFull = false;
+
+  function wait(ms) {
+    return new Promise(function (r) { setTimeout(r, ms); });
+  }
+
+  function step(index) {
+    if (saveAllAborted) return Promise.resolve({ done: done, failed: failed, aborted: true });
+    if (quotaFull) return Promise.resolve({ done: done, failed: failed, aborted: true, quota: true });
+    if (index >= ids.length) return Promise.resolve({ done: done, failed: failed, aborted: false });
+
+    var id = ids[index];
+    var cached = lsGet('pq:species:' + id);
+    if (cached && cached.flavors) {
+      done++;
+      if (onProgress) onProgress(done + failed, ids.length);
+      // キャッシュ済みは通信しないので待たずに次へ
+      return (index % 40 === 0 ? wait(0) : Promise.resolve()).then(function () {
+        return step(index + 1);
+      });
+    }
+
+    return getSpecies(id)
+      .then(function (sp) { return fillEvolvesFrom(sp); })
+      .then(function () {
+        // 端末の保存容量が尽きていないか確認する
+        if (!lsGet('pq:species:' + id)) { quotaFull = true; return; }
+        done++;
+      })
+      .catch(function () { failed++; })
+      .then(function () {
+        if (onProgress) onProgress(done + failed, ids.length);
+        return wait(150);          // リクエスト間 150ms（行儀よく）
+      })
+      .then(function () { return step(index + 1); });
+  }
+
+  // タイプ対応表も一緒に保存しておく
+  window.__pqNoEvict = true;
+  return fetchTypeMap().catch(function () { return null; }).then(function () {
+    return step(0);
+  }).then(function (res) {
+    window.__pqNoEvict = false;
+    return res;
+  }, function (err) {
+    window.__pqNoEvict = false;
+    throw err;
+  });
+}
+
+function clearSpeciesCache() {
+  var keys = [];
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && (k.indexOf('pq:species:') === 0 || k === 'pq:typemap')) keys.push(k);
+    }
+    keys.forEach(function (k) { localStorage.removeItem(k); });
+  } catch (e) { /* 無視 */ }
+  TypeMap = null;
+  return keys.length;
 }
 
 /* ---------------- デバッグ用 ---------------- */

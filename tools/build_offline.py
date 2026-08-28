@@ -408,12 +408,14 @@ OFFLINE_SHIM = r"""
     return Promise.resolve(out);
   };
 
-  // 画面に「オフライン版」と表示する
+  // 画面に「オフライン版」と表示し、不要なオフライン対策パネルは隠す
   document.addEventListener('DOMContentLoaded', function () {
     var el = document.getElementById('dexTopTitle');
     if (el) el.textContent = 'ポケモン図鑑クイズ（オフライン版）';
     var note = document.getElementById('loadingNote');
     if (note) note.textContent = 'オフライン版です。通信は行いません。';
+    var panel = document.getElementById('offlinePanel');
+    if (panel) panel.hidden = true;   // データは埋め込み済みなので不要
   });
 })();
 """
