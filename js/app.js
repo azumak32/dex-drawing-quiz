@@ -48,34 +48,90 @@ function hideInterstitial() {
    S1 設定画面
    ========================================================= */
 
-/* ---------- 出題範囲 ---------- */
-function renderEraButtons() {
-  var wrap = $id('eraButtons');
+/* ---------- 出題範囲（世代 × 出典ソフト） ----------
+   世代は「その世代で新登場した種」だけ。どちらも複数選択できる。
+   組み合わせによっては該当する種が 0 になるので、その場合は選べなくする。 */
+
+function toggleInArray(arr, value) {
+  var i = arr.indexOf(value);
+  if (i >= 0) arr.splice(i, 1);
+  else arr.push(value);
+  return arr;
+}
+
+function renderGenButtons() {
+  var wrap = $id('genButtons');
   wrap.innerHTML = '';
-  ERA_TABLE.forEach(function (era) {
+  var mask = sourceMask();
+  GEN_TABLE.forEach(function (g) {
+    var n = countForGen(g.gen, mask);
+    var on = State.settings.gens.indexOf(g.gen) >= 0;
     var b = document.createElement('button');
     b.type = 'button';
-    b.className = 'btn btn-choice' +
-      (State.settings.range === 'era' && State.settings.eraKey === era.key ? ' is-on' : '');
-    b.dataset.era = era.key;
-    b.innerHTML = era.label + '<small>No.1〜' + era.max + '</small>';
-    b.addEventListener('click', function () {
-      State.settings.range = 'era';
-      State.settings.eraKey = era.key;
-      renderRange();
-      beep('tap');
-    });
+    b.className = 'btn btn-choice' + (on ? ' is-on' : '') + (n === 0 ? ' is-disabled' : '');
+    b.dataset.gen = String(g.gen);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.innerHTML = g.label + '<small>' + g.games + '／' + n + '種</small>';
+    // 選択中のものは 0 種でも押せるままにする（解除できなくなると詰むため）
+    if (n === 0 && !on) {
+      b.disabled = true;
+      b.title = 'えらんだ出典ソフトに、この世代の図鑑説明はありません';
+    } else {
+      b.addEventListener('click', function () {
+        toggleInArray(State.settings.gens, g.gen);
+        renderRange();
+        beep('tap');
+      });
+    }
     wrap.appendChild(b);
   });
 }
 
+function renderSourceButtons() {
+  var wrap = $id('sourceButtons');
+  wrap.innerHTML = '';
+  FLAVOR_SOURCES.forEach(function (src) {
+    var usable = sourceUsable(src.key);
+    var on = State.settings.sources.indexOf(src.key) >= 0;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-choice' + (on ? ' is-on' : '') + (usable ? '' : ' is-disabled');
+    b.dataset.source = src.key;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.innerHTML = src.label + '<small>' + src.note + '</small>';
+    // 選択中のものは押せるままにする（解除できなくなると詰むため）
+    if (!usable && !on) {
+      b.disabled = true;
+      b.title = 'えらんだ世代のポケモンに、このソフトの図鑑説明はありません';
+    } else {
+      b.addEventListener('click', function () {
+        toggleInArray(State.settings.sources, src.key);
+        renderRange();
+        beep('tap');
+      });
+    }
+    wrap.appendChild(b);
+  });
+  var any = State.settings.sources.length === 0;
+  $id('btnSourceAny').classList.toggle('is-on', any);
+}
+
 function renderRange() {
-  var isEra = State.settings.range === 'era';
-  $id('btnRangeEra').classList.toggle('is-on', isEra);
-  $id('btnRangeMaster').classList.toggle('is-on', !isEra);
-  $id('eraList').hidden = !isEra;
-  $id('rangeNote').textContent = '出題範囲：' + rangeLabel();
-  renderEraButtons();
+  renderGenButtons();
+  renderSourceButtons();
+
+  var n = questionPool().length;
+  var note = $id('rangeNote');
+  note.textContent = '出題範囲：' + rangeLabel();
+  note.classList.toggle('is-empty', n === 0);
+
+  // 出題できる種が 1 つも無ければ開始させない
+  var can = n > 0;
+  $id('btnStartGame').disabled = !can;
+  $id('btnQuickStart').disabled = !can;
+  if (!can) {
+    note.textContent = '出題できるポケモンがいません。世代か出典をえらび直してください。';
+  }
   saveState();
 }
 
@@ -230,6 +286,18 @@ function startGame(quick) {
     State.order = cps.length ? shuffle(cps.map(function (p) { return p.id; })) : ['__quick__'];
   }
 
+  // 出題範囲を絞りすぎて、問題数ぶんのポケモンを用意できないことがある
+  var pool = questionPool();
+  if (!pool.length) {
+    toast('出題できるポケモンがいません。出題範囲をえらび直してください');
+    return;
+  }
+  if (pool.length < State.order.length) {
+    toast('この出題範囲は ' + pool.length + ' 種しかありません（' +
+          State.order.length + ' 問ぶん必要）。範囲を広げてください');
+    return;
+  }
+
   State.round = 0;
   State.quiz = [];
   State.usedIds = [];
@@ -257,11 +325,12 @@ function runPrefetch() {
   cnt.textContent = '0 / ' + State.order.length;
 
   var count = State.order.length;
-  var maxId = currentMaxId();
+  var pool = questionPool();
+  var versions = allowedVersions();
   // ?debug=1 では出題ポケモンを固定して繰り返しテストできるようにする
   window.DEBUG_FIXED_IDS = DEBUG ? [25, 4, 1, 7, 133, 143, 150, 94, 6, 9] : null;
 
-  prefetchQuestions(count, maxId, function (done, total) {
+  prefetchQuestions(count, pool, versions, function (done, total) {
     cnt.textContent = done + ' / ' + total;
     bar.style.width = (total ? Math.round(done / total * 100) : 0) + '%';
   }).then(function (questions) {
@@ -474,24 +543,26 @@ function showReveal() {
 
   /* --- 協力モードのチーム記録 --- */
   var isCoop = State.settings.mode !== 'vs' || drawerId === '__quick__';
+  var isLastRound = State.round >= State.order.length - 1;
   var rec = $id('coopRecord');
   if (isCoop) {
     rec.hidden = false;
-    rec.textContent = '全 ' + State.order.length + ' 問中 ' +
-      State.coop.correct + ' 問正解！';
+    rec.textContent = (isLastRound ? 'これで最後の問題！ ' : '') +
+      '全 ' + State.order.length + ' 問中 ' + State.coop.correct + ' 問正解！';
   } else {
     rec.hidden = true;
   }
 
-  /* --- 次へボタンの文言 --- */
-  var isLastRound = State.round >= State.order.length - 1;
+  /* --- 次へボタンの文言 ---
+     協力モードの最終問題では設定画面（S1）に戻る。押した先が分かるよう
+     「もう一度あそぶ」ではなく行き先そのものを書く。 */
   var btn = $id('btnRevealNext');
   if (!isLastRound) {
     btn.textContent = '次の出題へ';
   } else if (State.settings.mode === 'vs' && drawerId !== '__quick__') {
     btn.textContent = '結果発表へ';
   } else {
-    btn.textContent = 'もう一度あそぶ';
+    btn.textContent = '最初に戻る';
   }
 
   showScreen('s4');
@@ -1005,13 +1076,19 @@ function initApp() {
   $id('btnInterOk').addEventListener('click', hideInterstitial);
 
   /* ---- S1 の配線 ---- */
-  $id('btnRangeEra').addEventListener('click', function () {
-    State.settings.range = 'era';
+  $id('btnGenAll').addEventListener('click', function () {
+    State.settings.gens = GEN_TABLE.map(function (g) { return g.gen; })
+      .filter(function (gen) { return countForGen(gen, sourceMask()) > 0; });
     renderRange();
     beep('tap');
   });
-  $id('btnRangeMaster').addEventListener('click', function () {
-    State.settings.range = 'master';
+  $id('btnGenNone').addEventListener('click', function () {
+    State.settings.gens = [];
+    renderRange();
+    beep('tap');
+  });
+  $id('btnSourceAny').addEventListener('click', function () {
+    State.settings.sources = [];        // 空＝おまかせ
     renderRange();
     beep('tap');
   });

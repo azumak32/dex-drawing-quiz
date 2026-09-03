@@ -244,8 +244,10 @@ function fillEvolvesFrom(species) {
 }
 
 /* ---------------- 1問分のデータを用意する ---------------- */
-/* 日本語解説文が無い／少ない個体を引いたときは、別の ID を引き直す */
-function loadQuestion(maxId, usedIds) {
+/* pool: 出題候補の ID 配列（世代 × 出典で絞り込み済み）
+   versions: 図鑑説明の出典で絞るバージョン slug 配列（null ならおまかせ）
+   日本語解説文が無い個体を引いたときは、別の ID を引き直す */
+function loadQuestion(pool, usedIds, versions) {
   var tries = 0;
   function attempt() {
     tries++;
@@ -253,11 +255,11 @@ function loadQuestion(maxId, usedIds) {
     // ?debug=1 のときは固定の ID を順に使う（繰り返しテスト用）
     if (window.DEBUG_FIXED_IDS && window.DEBUG_FIXED_IDS.length) {
       var fixed = window.DEBUG_FIXED_IDS.filter(function (x) {
-        return usedIds.indexOf(x) < 0 && x <= maxId;
+        return usedIds.indexOf(x) < 0 && pool.indexOf(x) >= 0;
       });
-      id = fixed.length ? fixed[0] : pickIds(1, maxId, usedIds)[0];
+      id = fixed.length ? fixed[0] : pickIds(1, pool, usedIds)[0];
     } else {
-      id = pickIds(1, maxId, usedIds)[0];
+      id = pickIds(1, pool, usedIds)[0];
     }
     if (!id) return Promise.reject(new Error('抽選できませんでした'));
     return getSpecies(id).then(function (sp) {
@@ -268,7 +270,7 @@ function loadQuestion(maxId, usedIds) {
       }
       usedIds.push(id);
       return fillEvolvesFrom(sp).then(function (full) {
-        var q = buildQuestionText(full);
+        var q = buildQuestionText(full, versions);
         return {
           id: full.id,
           nameJa: full.nameJa,
@@ -289,7 +291,7 @@ function loadQuestion(maxId, usedIds) {
 
 /* ---------------- プリフェッチ ---------------- */
 /* 全問分をまとめて取得してキャッシュ。以後ネットが切れても最後まで遊べる。 */
-function prefetchQuestions(count, maxId, onProgress) {
+function prefetchQuestions(count, pool, versions, onProgress) {
   var needTypeMap = !loadTypeMapFromCache();
   var totalSteps = count + (needTypeMap ? 21 : 0);
   var doneSteps = 0;
@@ -305,7 +307,7 @@ function prefetchQuestions(count, maxId, onProgress) {
 
   for (var i = 0; i < count; i++) {
     chain = chain.then(function () {
-      return loadQuestion(maxId, used).then(function (q) {
+      return loadQuestion(pool, used, versions).then(function (q) {
         questions.push(q);
         step();
       });
@@ -415,7 +417,7 @@ function clearSpeciesCache() {
 /* コンソールで pqTest(25) と打つと、伏字済みの解説文が確認できる */
 function pqTest(id) {
   return getSpecies(id).then(fillEvolvesFrom).then(function (sp) {
-    var q = buildQuestionText(sp);
+    var q = buildQuestionText(sp, null);
     console.log('No.' + sp.id + ' ' + sp.nameJa + '（' + sp.genusJa + '）');
     console.log('出典: ポケットモンスター ' + (VERSION_JA[q.version] || q.version));
     console.log('--- 出題用（伏字' + (q.wasMasked ? 'あり' : 'なし') + '） ---');

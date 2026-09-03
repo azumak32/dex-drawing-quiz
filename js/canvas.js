@@ -40,8 +40,12 @@ var DrawPad = (function () {
     window.addEventListener('orientationchange', onWindowResize);
   }
 
-  /* 画面幅に合わせて内部解像度を決める（Retina 対応、上限あり） */
-  function resize() {
+  /* 画面幅に合わせて内部解像度を決める（Retina 対応、上限あり）
+     keepContent=false を渡すと、描いてあった絵を引き継がず白紙にする。
+     （引き継ぎは img.onload で非同期に走るため、呼び出し側で clear() しても
+       あとから絵が戻ってきてしまう。出題者交代時はここで断ち切る。） */
+  function resize(keepContent) {
+    if (keepContent === undefined) keepContent = true;
     var wrap = $id('canvasWrap');
     if (!wrap || !canvas) return;
     var cssW = wrap.clientWidth;
@@ -53,7 +57,7 @@ var DrawPad = (function () {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     var prev = null;
-    if (canvas.width && canvas.height) {
+    if (keepContent && canvas.width && canvas.height) {
       try { prev = canvas.toDataURL('image/png'); } catch (e) { prev = null; }
     }
 
@@ -171,7 +175,7 @@ var DrawPad = (function () {
 
   function reset() {
     strokes = [];
-    resize();
+    resize(false);          // 前の出題者の絵を引き継がない
     clear();
     state.eraser = false;
     $id('btnEraser').classList.remove('is-on');

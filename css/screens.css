@@ -11,14 +11,16 @@
 .game-title-sub{ display:block; font-size:20px; letter-spacing:.4em; margin-top:4px; color:var(--lcd-dim); }
 .game-lead{ margin-top:12px !important; font-size:13px; color:var(--lcd-dim); line-height:1.7; }
 
-.era-list{ margin-top:12px; }
-.era-list[hidden]{ display:none; }
-.era-buttons{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
-.era-buttons .btn{ font-size:14px; padding:11px 8px; }
+.choice-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.choice-grid .btn{ font-size:14px; padding:11px 8px; }
 .range-note{
   margin:12px 0 0; padding:8px 10px;
   background:#fff8d8; border:2px solid #e6d48a; border-radius:8px;
   font-size:14px; font-weight:700; text-align:center; color:#7a5c00;
+}
+/* 出題できる種が 0 のとき */
+.range-note.is-empty{
+  background:#ffe3e3; border-color:#e08a8a; color:#8a2020;
 }
 
 /* プレイヤー行 */
@@ -295,7 +297,7 @@
   .answer-image img{ max-height:46vh; object-fit:contain; }
 }
 @media (max-width:560px){
-  .era-buttons{ grid-template-columns:1fr; }
+  .choice-grid{ grid-template-columns:1fr; }
   .dexcard{ grid-template-columns:1fr; }
   .dexcard-name{ font-size:28px; }
   .game-title{ font-size:26px; }

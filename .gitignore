@@ -10,6 +10,6 @@ dist-offline/
 進捗.md
 
 # 開発用の一時ファイル
-_test.html
+_test*.html
 *.pyc
 __pycache__/

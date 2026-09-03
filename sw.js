@@ -4,7 +4,7 @@
    （HTTPS または localhost でのみ動作。GitHub Pages は HTTPS なので有効）
    ========================================================= */
 
-var CACHE = 'pq-shell-v1';
+var CACHE = 'pq-shell-v2';
 var API_CACHE = 'pq-api-v1';
 
 var SHELL = [
@@ -13,6 +13,7 @@ var SHELL = [
   './css/dex.css',
   './css/screens.css',
   './js/state.js',
+  './js/flavor_index.js',
   './js/dexdata.js',
   './js/pokeapi.js',
   './js/judge.js',

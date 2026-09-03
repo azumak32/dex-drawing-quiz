@@ -49,22 +49,28 @@
 
       <!-- 出題範囲 -->
       <div class="panel">
-        <h2 class="panel-title">① 出題範囲</h2>
+        <h2 class="panel-title">① 出題するポケモン<small>（世代・複数えらべます）</small></h2>
+        <p class="hint">その世代で<b>新しく登場した</b>ポケモンだけが出ます。複数えらぶと混ざります。</p>
+        <div class="choice-grid" id="genButtons"></div>
         <div class="row-2">
-          <button type="button" class="btn btn-choice" id="btnRangeEra" data-range="era">あの頃のポケモンモード</button>
-          <button type="button" class="btn btn-choice is-on" id="btnRangeMaster" data-range="master">ポケモンマスターモード<small>（全898種）</small></button>
+          <button type="button" class="btn btn-sub" id="btnGenAll">ぜんぶえらぶ</button>
+          <button type="button" class="btn btn-sub" id="btnGenNone">ぜんぶ解除</button>
         </div>
-        <div class="era-list" id="eraList" hidden>
-          <p class="hint">その時点までに登場した全ポケモンから出題します（累積方式）。</p>
-          <div class="era-buttons" id="eraButtons"></div>
-        </div>
-        <p class="range-note" id="rangeNote">出題範囲：全国図鑑 No.1〜898（全898種）</p>
-        <p class="hint">日本語の図鑑解説文は No.1〜898（ソード・シールドまで）にのみ存在するため、出題はこの範囲です。</p>
+      </div>
+
+      <!-- 図鑑説明の出典 -->
+      <div class="panel">
+        <h2 class="panel-title">② 図鑑説明の出典<small>（複数えらべます）</small></h2>
+        <p class="hint">お題に使う図鑑説明を、どのソフトのものにするか選べます。</p>
+        <div class="choice-grid" id="sourceButtons"></div>
+        <button type="button" class="btn btn-choice btn-sub is-on" id="btnSourceAny">おまかせ（すべてのソフトから）</button>
+        <p class="hint">日本語の図鑑説明は、X・Y 以降のソフトにしか存在しません（赤緑・金銀・RSE・DPP・BW の日本語テキストは公開データにありません）。初代のポケモンは <b>Let's Go!</b> を選ぶと、当時に近い文面になります。</p>
+        <p class="range-note" id="rangeNote">出題範囲：全世代 × おまかせ（すべてのソフト） ＝ 898 種</p>
       </div>
 
       <!-- プレイヤー登録 -->
       <div class="panel">
-        <h2 class="panel-title">② プレイヤー登録<small>（最大10人・対戦モードで使用）</small></h2>
+        <h2 class="panel-title">③ プレイヤー登録<small>（最大10人・対戦モードで使用）</small></h2>
         <div class="players" id="playerList"></div>
         <div class="row-2">
           <button type="button" class="btn" id="btnAddPlayer">＋ プレイヤーを追加</button>
@@ -76,7 +82,7 @@
 
       <!-- モード -->
       <div class="panel">
-        <h2 class="panel-title">③ あそびかた</h2>
+        <h2 class="panel-title">④ あそびかた</h2>
         <div class="row-2">
           <button type="button" class="btn btn-choice is-on" id="btnModeVs" data-mode="vs">対戦モード<small>ひとりずつ解答・ランキングあり</small></button>
           <button type="button" class="btn btn-choice" id="btnModeCoop" data-mode="coop">協力モード<small>みんなで相談して1つの答え</small></button>
@@ -85,7 +91,7 @@
 
       <!-- 時間制限 -->
       <div class="panel">
-        <h2 class="panel-title">④ 時間制限</h2>
+        <h2 class="panel-title">⑤ 時間制限</h2>
         <div class="row-2">
           <button type="button" class="btn btn-choice is-on" id="btnTimerOff" data-timer="off">なし</button>
           <button type="button" class="btn btn-choice" id="btnTimerOn" data-timer="on">あり</button>
@@ -276,6 +282,7 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="js/state.js"></script>
+<script src="js/flavor_index.js"></script>
 <script src="js/dexdata.js"></script>
 <script src="js/pokeapi.js"></script>
 <script src="js/judge.js"></script>

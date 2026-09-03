@@ -315,7 +315,8 @@ def build_html(dataset, with_sprites):
     html = html.replace("</head>", "<style>\n%s\n</style>\n</head>" % css)
 
     # JS をインライン化
-    js_files = ["js/state.js", "js/dexdata.js", "js/pokeapi.js", "js/judge.js",
+    js_files = ["js/state.js", "js/flavor_index.js", "js/dexdata.js",
+                "js/pokeapi.js", "js/judge.js",
                 "js/canvas.js", "js/sfx.js", "js/app.js"]
     js = "\n;\n".join(read(p) for p in js_files)
     html = re.sub(r'\s*<script src="js/[^"]+"></script>', "", html)
@@ -385,17 +386,17 @@ OFFLINE_SHIM = r"""
     };
   }
 
-  window.prefetchQuestions = function (count, maxId, onProgress) {
+  window.prefetchQuestions = function (count, pool, versions, onProgress) {
     var used = [], out = [];
     var guard = 0;
     while (out.length < count && guard < count * 500) {
       guard++;
-      var id = pickIds(1, maxId, used)[0];
+      var id = pickIds(1, pool, used)[0];
       if (!id) break;
       used.push(id);
       var sp = speciesOf(id);
       if (!sp || !sp.flavors.length) continue;
-      var q = buildQuestionText(sp);
+      var q = buildQuestionText(sp, versions);
       if (!q) continue;
       out.push({
         id: sp.id, nameJa: sp.nameJa, genusJa: sp.genusJa,

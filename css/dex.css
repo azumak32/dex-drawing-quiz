@@ -169,6 +169,27 @@ button{ -webkit-tap-highlight-color: transparent; }
 }
 .btn-danger{ background:linear-gradient(180deg,#ffd0d0,#ff9a9a); box-shadow:0 4px 0 #b35555; }
 
+/* 複数選択で ON になっているものに ✓ を出す（色だけだと押した実感が薄いため）。
+   モード・時間制限は単一選択なので出さない。 */
+.choice-grid .btn-choice{ position:relative; }
+.choice-grid .btn-choice.is-on::before{
+  content:'\2713'; position:absolute; top:4px; right:8px;
+  font-size:13px; font-weight:800; color:#0d6f96;
+}
+
+/* 選べない組み合わせ（該当するポケモンが 0 種） */
+.btn-choice.is-disabled{
+  background:linear-gradient(180deg,#f2f2f2,#dcdcdc);
+  color:#9a9a9a; box-shadow:0 2px 0 #b8b8b8; opacity:1;
+}
+.btn-choice.is-disabled small{ opacity:.9; }
+
+/* 補助ボタン（ぜんぶえらぶ／おまかせ など）は主張を弱める */
+.btn-sub{
+  font-size:13px; padding:9px 10px; margin-top:8px;
+  box-shadow:0 3px 0 var(--btn-shadow), 0 4px 6px rgba(0,0,0,.16);
+}
+
 /* ---------------- パネル（白カード） ---------------- */
 .panel{
   background:var(--paper);
