@@ -263,6 +263,15 @@ function showOrder() {
 }
 
 /* ---------- モード・時間制限 ---------- */
+/* ④プレイヤー登録を開いて、そこまでスクロールする。
+   既定では畳んであるので、必要になった瞬間に見せる。 */
+function openPlayerPanel() {
+  var panel = $id('playerPanel');
+  if (!panel || panel.open) return;
+  panel.open = true;
+  if (panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function renderMode() {
   var vs = State.settings.mode === 'vs';
   $id('btnModeVs').classList.toggle('is-on', vs);
@@ -294,6 +303,7 @@ function startGame(quick) {
     var ps = activePlayers();
     if (ps.length < 2) {
       toast('対戦モードは2人以上の名前が必要です');
+      openPlayerPanel();
       return;
     }
     if (!State.order.length || State.order.length !== ps.length ||
@@ -578,12 +588,18 @@ function showReveal() {
      協力モードの最終問題では設定画面（S1）に戻る。押した先が分かるよう
      「もう一度あそぶ」ではなく行き先そのものを書く。 */
   var btn = $id('btnRevealNext');
+  var again = $id('btnRevealAgain');
+  again.hidden = true;
+  btn.classList.add('btn-primary');
   if (!isLastRound) {
     btn.textContent = '次の出題へ';
   } else if (State.settings.mode === 'vs' && drawerId !== '__quick__') {
     btn.textContent = '結果発表へ';
   } else {
+    // 協力モードには結果発表画面が無いので、ここで再挑戦できるようにする
     btn.textContent = '最初に戻る';
+    btn.classList.remove('btn-primary');
+    again.hidden = false;
   }
 
   showScreen('s4');
@@ -1072,9 +1088,11 @@ function initApp() {
 
   $id('btnModeVs').addEventListener('click', function () {
     State.settings.mode = 'vs'; renderMode(); beep('tap');
+    openPlayerPanel();          // 対戦モードでは名前の入力が要る
   });
   $id('btnModeCoop').addEventListener('click', function () {
     State.settings.mode = 'coop'; renderMode(); beep('tap');
+    $id('playerPanel').open = false;   // 協力モードでは使わないので畳む
   });
 
   $id('btnTimerOff').addEventListener('click', function () {
@@ -1107,6 +1125,12 @@ function initApp() {
   $id('btnDrawDone').addEventListener('click', finishDrawing);
 
   $id('btnRevealNext').addEventListener('click', nextRound);
+  $id('btnRevealAgain').addEventListener('click', function () {
+    // 協力モードの最終問題から、同じメンバー・同じ設定でそのまま再挑戦する
+    State.finished = false;
+    beep('ok');
+    playAgain();
+  });
 
   $id('btnPlayAgain').addEventListener('click', function () { beep('ok'); playAgain(); });
   $id('btnBackToSetup').addEventListener('click', function () {

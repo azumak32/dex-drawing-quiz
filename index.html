@@ -47,20 +47,20 @@
       <button type="button" class="btn btn-primary btn-jumbo" id="btnQuickStart">▶ すぐに始める</button>
       <p class="hint hint-center">えらんだ出題範囲・協力モード・時間制限なしで、すぐに1問はじまります。</p>
 
-      <!-- 出題範囲 -->
-      <div class="panel">
-        <h2 class="panel-title">① 出題するポケモン<small>（世代・複数えらべます）</small></h2>
+<!-- 出題範囲 -->
+      <details class="panel accordion" open>
+        <summary class="panel-title">① 出題するポケモン<small>（世代・複数えらべます）</small></summary>
         <p class="hint">その世代で<b>新しく登場した</b>ポケモンだけが出ます。複数えらぶと混ざります。</p>
         <div class="choice-grid" id="genButtons"></div>
         <div class="row-2">
           <button type="button" class="btn btn-sub" id="btnGenAll">ぜんぶえらぶ</button>
           <button type="button" class="btn btn-sub" id="btnGenNone">ぜんぶ解除</button>
         </div>
-      </div>
+      </details>
 
-      <!-- 図鑑説明の出典 -->
-      <div class="panel">
-        <h2 class="panel-title">② 図鑑説明の出典<small>（ソフト・複数えらべます）</small></h2>
+<!-- 図鑑説明の出典 -->
+      <details class="panel accordion" open>
+        <summary class="panel-title">② 図鑑説明の出典<small>（ソフト・複数えらべます）</small></summary>
         <p class="hint">お題に使う図鑑説明を、どのソフトのものにするか選べます。</p>
         <div class="choice-grid" id="sourceButtons"></div>
         <button type="button" class="btn btn-choice btn-sub is-on" id="btnSourceAny">おまかせ（すべてのソフトから）</button>
@@ -70,11 +70,20 @@
           <span id="askedNote">この端末での出題ずみ：なし</span>
           <button type="button" class="btn btn-mini" id="btnClearAsked">履歴をリセット</button>
         </p>
-      </div>
+      </details>
 
-      <!-- プレイヤー登録 -->
-      <div class="panel">
-        <h2 class="panel-title">③ プレイヤー登録<small>（最大10人・対戦モードで使用）</small></h2>
+<!-- モード -->
+      <details class="panel accordion" open>
+        <summary class="panel-title">③ あそびかた<small>（対戦か協力か）</small></summary>
+        <div class="row-2">
+          <button type="button" class="btn btn-choice is-on" id="btnModeVs" data-mode="vs">対戦モード<small>ひとりずつ解答・ランキングあり</small></button>
+          <button type="button" class="btn btn-choice" id="btnModeCoop" data-mode="coop">協力モード<small>みんなで相談して1つの答え</small></button>
+        </div>
+      </details>
+
+<!-- プレイヤー登録 -->
+      <details class="panel accordion" id="playerPanel">
+        <summary class="panel-title">④ プレイヤー登録<small>（対戦モードのときだけ必要・最大10人）</small></summary>
         <div class="players" id="playerList"></div>
         <div class="row-2">
           <button type="button" class="btn" id="btnAddPlayer">＋ プレイヤーを追加</button>
@@ -82,20 +91,11 @@
         </div>
         <p class="hint">「リモート」を ON にすると、その人の解答画面に「（代理入力）」と表示されます（ビデオ通話参加者用）。</p>
         <div class="order-result" id="orderResult" hidden></div>
-      </div>
+      </details>
 
-      <!-- モード -->
-      <div class="panel">
-        <h2 class="panel-title">④ あそびかた</h2>
-        <div class="row-2">
-          <button type="button" class="btn btn-choice is-on" id="btnModeVs" data-mode="vs">対戦モード<small>ひとりずつ解答・ランキングあり</small></button>
-          <button type="button" class="btn btn-choice" id="btnModeCoop" data-mode="coop">協力モード<small>みんなで相談して1つの答え</small></button>
-        </div>
-      </div>
-
-      <!-- 時間制限 -->
-      <div class="panel">
-        <h2 class="panel-title">⑤ 時間制限</h2>
+<!-- 時間制限 -->
+      <details class="panel accordion" open>
+        <summary class="panel-title">⑤ 時間制限</summary>
         <div class="row-2">
           <button type="button" class="btn btn-choice is-on" id="btnTimerOff" data-timer="off">なし</button>
           <button type="button" class="btn btn-choice" id="btnTimerOn" data-timer="on">あり</button>
@@ -110,7 +110,7 @@
             <input type="range" id="answerSec" min="10" max="120" step="5" value="30">
           </label>
         </div>
-      </div>
+      </details>
 
       <!-- 説明 -->
       <details class="panel accordion" id="howto" open>
@@ -210,6 +210,7 @@
       </div>
       <div class="results" id="revealResults"></div>
       <p class="coop-record" id="coopRecord" hidden></p>
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnRevealAgain" hidden>同じ設定でもう一度あそぶ</button>
       <button type="button" class="btn btn-primary btn-jumbo" id="btnRevealNext">次の出題へ</button>
     </section>
 
