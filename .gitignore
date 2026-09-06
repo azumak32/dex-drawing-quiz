@@ -13,3 +13,6 @@ dist-offline/
 _test*.html
 *.pyc
 __pycache__/
+
+# Claude Code のローカル設定
+.claude/

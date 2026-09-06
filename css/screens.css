@@ -305,6 +305,22 @@
 }
 
 /* ================= オフライン対策パネル ================= */
+.range-history{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin:6px 0 0; font-size:13px; color:var(--muted);
+}
+.btn-mini{ padding:3px 10px; font-size:12px; line-height:1.6; border-radius:999px; min-height:0; }
+
+/* 起動時のローディング（図鑑データの取得中だけ出る） */
+.boot-overlay{
+  position:fixed; inset:0; z-index:9999;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  padding:24px; background:var(--bg, #1b1d21); text-align:center;
+}
+.boot-overlay.is-done{ display:none; }
+.boot-overlay .loadbar{ width:min(320px, 80vw); }
+.boot-title{ margin:0; font-size:16px; font-weight:700; }
+.boot-note{ margin:0; font-size:13px; color:var(--muted); }
 .offline-status{
   margin:10px 0 6px; font-size:15px; font-weight:800; color:var(--dex-red-dark);
 }

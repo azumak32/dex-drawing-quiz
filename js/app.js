@@ -116,6 +116,26 @@ function renderSourceButtons() {
   $id('btnSourceAny').classList.toggle('is-on', any);
 }
 
+/* 端末に残っている出題履歴の件数を出す。
+   出題ずみのポケモンは抽選の優先度が下がる（js/dexdata.js の pickIds）。 */
+function renderAskedNote() {
+  var el = $id('askedNote');
+  if (!el) return;
+  var asked = loadAskedIds();
+  var pool = questionPool();
+  var seen = 0;
+  var rank = {};
+  asked.forEach(function (id) { rank[id] = true; });
+  pool.forEach(function (id) { if (rank[id]) seen++; });
+  if (!asked.length) {
+    el.textContent = 'この端末での出題ずみ：なし';
+  } else {
+    el.textContent = 'この端末での出題ずみ：' + seen + ' / ' + pool.length + ' 種'
+      + (seen >= pool.length && pool.length ? '（ひと巡りしました）' : '');
+  }
+  $id('btnClearAsked').disabled = !asked.length;
+}
+
 function renderRange() {
   renderGenButtons();
   renderSourceButtons();
@@ -124,6 +144,7 @@ function renderRange() {
   var note = $id('rangeNote');
   note.textContent = '出題範囲：' + rangeLabel();
   note.classList.toggle('is-empty', n === 0);
+  renderAskedNote();
 
   // 出題できる種が 1 つも無ければ開始させない
   var can = n > 0;
@@ -995,62 +1016,6 @@ function restoreScreen() {
    オフライン対策（図鑑データの端末保存 / Service Worker）
    ========================================================= */
 
-var savingAll = false;
-
-function renderOfflineStatus() {
-  var n = countCachedSpecies();
-  var el = $id('offlineStatus');
-  var bar = $id('offlineBar');
-  var pct = Math.round(n / MAX_DEX_ID * 100);
-  bar.style.width = pct + '%';
-  if (n >= MAX_DEX_ID) {
-    el.textContent = '保存済み：' + n + ' / ' + MAX_DEX_ID + ' 種 — 準備完了！ネットが無くても遊べます';
-    el.classList.add('offline-ready');
-  } else {
-    el.textContent = '保存済み：' + n + ' / ' + MAX_DEX_ID + ' 種';
-    el.classList.remove('offline-ready');
-  }
-}
-
-function startSaveAll() {
-  var btn = $id('btnSaveAll');
-  if (savingAll) {
-    // 実行中に押されたら中止
-    abortSaveAll();
-    return;
-  }
-  savingAll = true;
-  btn.textContent = '中止する';
-  $id('btnClearCache').disabled = true;
-
-  saveAllSpecies(function (done, total) {
-    var pct = Math.round(done / total * 100);
-    $id('offlineBar').style.width = pct + '%';
-    $id('offlineStatus').textContent = '保存中… ' + done + ' / ' + total + ' 種（' + pct + '%）';
-  }).then(function (res) {
-    savingAll = false;
-    btn.textContent = '図鑑データを端末に保存';
-    $id('btnClearCache').disabled = false;
-    renderOfflineStatus();
-    if (res.quota) {
-      toast('iPad の保存容量がいっぱいです。Safari の履歴を消すか、オフライン版HTMLをお使いください');
-    } else if (res.aborted) {
-      toast('保存を中止しました（続きから再開できます）');
-    } else if (res.failed) {
-      toast(res.failed + ' 件だけ取得できませんでした。もう一度押すと続きを取得します');
-    } else {
-      beep('fanfare');
-      toast('保存が完了しました。ネットが無くても遊べます');
-    }
-  }).catch(function (err) {
-    savingAll = false;
-    btn.textContent = '図鑑データを端末に保存';
-    $id('btnClearCache').disabled = false;
-    console.error(err);
-    toast('保存に失敗しました。ネット接続を確認してください');
-  });
-}
-
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   // Service Worker は HTTPS（または localhost）でのみ動作する
@@ -1128,14 +1093,12 @@ function initApp() {
     saveState();
   });
 
-  $id('btnSaveAll').addEventListener('click', function () { beep('tap'); startSaveAll(); });
-  $id('btnClearCache').addEventListener('click', function () {
-    var n = clearSpeciesCache();
-    renderOfflineStatus();
+  $id('btnClearAsked').addEventListener('click', function () {
+    var n = clearAskedIds();
+    renderAskedNote();
     beep('tap');
-    toast(n + ' 件の保存データを消しました');
+    toast(n + ' 種の出題履歴を消しました');
   });
-  renderOfflineStatus();
 
   $id('btnQuickStart').addEventListener('click', function () { beep('ok'); startGame(true); });
   $id('btnStartGame').addEventListener('click', function () { beep('ok'); startGame(false); });
@@ -1184,4 +1147,25 @@ function initApp() {
   setTopStatus();
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+/* 図鑑データ（説明文・名前・分類・タイプ）を読んでから起動する。
+   出題プールの計算が図鑑データに依存するため、読み込み前に initApp を
+   走らせると 0 種になってしまう。2回目以降はブラウザ／Service Worker の
+   キャッシュから返るので、体感はほぼ待たない。 */
+function bootFail(err) {
+  console.error(err);
+  var note = $id('bootNote');
+  var title = $id('bootOverlay').querySelector('.boot-title');
+  title.textContent = '図鑑データを読み込めませんでした';
+  note.innerHTML = 'ネット接続を確認して、ページを再読み込みしてください。<br>' +
+                   '<span style="opacity:.6">' + String((err && err.message) || err) + '</span>';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var bar = $id('bootBar');
+  loadDex(function (done, total) {
+    bar.style.width = Math.round(done / total * 100) + '%';
+  }).then(function () {
+    $id('bootOverlay').classList.add('is-done');
+    initApp();
+  }).catch(bootFail);
+});

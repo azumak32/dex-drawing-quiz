@@ -47,7 +47,7 @@ function shuffle(arr) {
 
 /* ---------- 既定値 ---------- */
 var DEFAULT_SETTINGS = {
-  gens: [1, 2, 3, 4, 5, 6, 7, 8],  // 出題する世代（その世代で新登場した種のみ・複数選択）
+  gens: [1, 2, 3, 4, 5, 6, 7, 8, 9],  // 出題する世代（その世代で新登場した種のみ・複数選択）
   sources: [],       // 図鑑説明の出典ソフト（空配列＝おまかせ＝すべて）
   mode: 'vs',        // 'vs' 対戦 | 'coop' 協力
   timer: false,      // 時間制限あり/なし
@@ -135,4 +135,38 @@ function activePlayers() {
 function ensureScore(id) {
   if (!State.scores[id]) State.scores[id] = { answer: 0, draw: 0 };
   return State.scores[id];
+}
+
+/* ---------- 出題履歴（localStorage・端末に残る） ----------
+   同じポケモンが続けて出ないようにするための記録。
+   古い順に並んだ図鑑 No. の配列で、新しく出題したものを末尾に足していく。
+   ゲームの勝敗やプレイヤー名は入れない（何が出たかだけ）。 */
+var ASKED_KEY = 'pq:asked';
+var ASKED_MAX = 2000;   // これを超えたら古いものから捨てる
+
+function loadAskedIds() {
+  try {
+    var raw = localStorage.getItem(ASKED_KEY);
+    if (!raw) return [];
+    var a = JSON.parse(raw);
+    return Array.isArray(a) ? a.filter(function (x) { return typeof x === 'number'; }) : [];
+  } catch (e) { return []; }
+}
+
+/* 出題した ID を記録する。すでにある ID は「最近出た」扱いにするため末尾へ移す。 */
+function recordAskedIds(ids) {
+  if (!ids || !ids.length) return;
+  var list = loadAskedIds();
+  var add = {};
+  ids.forEach(function (id) { add[id] = true; });
+  list = list.filter(function (id) { return !add[id]; });
+  ids.forEach(function (id) { list.push(id); });
+  if (list.length > ASKED_MAX) list = list.slice(list.length - ASKED_MAX);
+  try { localStorage.setItem(ASKED_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function clearAskedIds() {
+  var n = loadAskedIds().length;
+  try { localStorage.removeItem(ASKED_KEY); } catch (e) {}
+  return n;
 }

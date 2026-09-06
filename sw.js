@@ -4,7 +4,7 @@
    （HTTPS または localhost でのみ動作。GitHub Pages は HTTPS なので有効）
    ========================================================= */
 
-var CACHE = 'pq-shell-v2';
+var CACHE = 'pq-shell-v3';
 var API_CACHE = 'pq-api-v1';
 
 var SHELL = [
@@ -13,9 +13,8 @@ var SHELL = [
   './css/dex.css',
   './css/screens.css',
   './js/state.js',
-  './js/flavor_index.js',
   './js/dexdata.js',
-  './js/pokeapi.js',
+  './js/dexsource.js',
   './js/judge.js',
   './js/canvas.js',
   './js/sfx.js',
@@ -58,6 +57,24 @@ self.addEventListener('fetch', function (e) {
           return res;
         }).catch(function () {
           return caches.match('./index.html');
+        });
+      })
+    );
+    return;
+  }
+
+  /* 図鑑データ（jsDelivr）：コミットを固定した URL なので中身が変わらない。
+     キャッシュ優先にしておけば、2回目以降は通信ゼロで起動できる。 */
+  if (/cdn\.jsdelivr\.net/.test(url.hostname)) {
+    e.respondWith(
+      caches.match(req).then(function (hit) {
+        if (hit) return hit;
+        return fetch(req).then(function (res) {
+          if (res && res.status === 200) {
+            var copy = res.clone();
+            caches.open(API_CACHE).then(function (c) { c.put(req, copy); });
+          }
+          return res;
         });
       })
     );

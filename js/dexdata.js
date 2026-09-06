@@ -3,9 +3,9 @@
                 解説文の整形と伏字処理
    ========================================================= */
 
-/* 日本語の図鑑解説文が存在する上限（ソード・シールドまで）。
-   No.899 以降（LEGENDSアルセウス新規・第9世代SV）は英語のみのため出題しない。 */
-var MAX_DEX_ID = 898;
+/* 全国図鑑の上限。data/dex.json 読み込み時に localdex.js が上書きする。
+   コンプリート版は No.1〜1025 の全種に日本語の図鑑解説文がある。 */
+var MAX_DEX_ID = 1025;
 
 /* ---------- 世代テーブル（その世代で「新登場」した範囲） ----------
    累積ではない。第2世代を選んだら No.152〜251 だけが出る。 */
@@ -17,28 +17,15 @@ var GEN_TABLE = [
   { gen: 5, label: '第5世代', games: 'ブラック・ホワイト・BW2',      min: 494, max: 649 },
   { gen: 6, label: '第6世代', games: 'X・Y・ORAS',                   min: 650, max: 721 },
   { gen: 7, label: '第7世代', games: 'サン・ムーン・USUM',           min: 722, max: 809 },
-  { gen: 8, label: '第8世代', games: 'ソード・シールド',             min: 810, max: 898 }
+  { gen: 8, label: '第8世代', games: 'ソード・シールド・LEGENDSアルセウス', min: 810, max: 905 },
+  { gen: 9, label: '第9世代', games: 'スカーレット・バイオレット',     min: 906, max: 1025 }
 ];
 
 /* ---------- 図鑑説明の出典ソフト ----------
-   PokeAPI に日本語の図鑑説明文が存在するのは、この6グループのソフトだけ。
-   赤緑・金銀・RSE・DPP・BW の日本語テキストは API に一切入っていない（実測で確認済み）。
-   bit は js/flavor_index.js のビット位置と対応する。順番を変えたら
-   tools/build_flavor_index.py の SOURCE_GROUPS も同じ順に直すこと。 */
-var FLAVOR_SOURCES = [
-  { key: 'xy',   bit: 0, label: 'X・Y',                     note: '第6世代',
-    versions: ['x', 'y'] },
-  { key: 'oras', bit: 1, label: 'オメガルビー・アルファサファイア', note: '第6世代',
-    versions: ['omega-ruby', 'alpha-sapphire'] },
-  { key: 'sm',   bit: 2, label: 'サン・ムーン',             note: '第7世代',
-    versions: ['sun', 'moon'] },
-  { key: 'usum', bit: 3, label: 'ウルトラサン・ウルトラムーン', note: '第7世代',
-    versions: ['ultra-sun', 'ultra-moon'] },
-  { key: 'lgpe', bit: 4, label: "Let's Go! ピカチュウ・イーブイ", note: '初代の文面に近い',
-    versions: ['lets-go-pikachu', 'lets-go-eevee'] },
-  { key: 'swsh', bit: 5, label: 'ソード・シールド',         note: '第8世代',
-    versions: ['sword', 'shield'] }
-];
+   実体は dexsource.js の SOURCE_GROUPS。起動時に loadDex() が差し替える（同ファイルの
+   loadDex）。ここで二重管理はしない。
+   形： { key, bit, label, note, versions:[slug,…] } */
+var FLAVOR_SOURCES = [];
 
 var ALL_SOURCE_MASK = (1 << FLAVOR_SOURCES.length) - 1;
 
@@ -112,7 +99,7 @@ function sourceUsable(srcKey, settings) {
   var src = sourceByKey(srcKey);
   if (!src) return false;
   // 世代が未選択のときは全世代で判定する（ボタンが全部無効になって詰むのを防ぐ）
-  var gens = s.gens && s.gens.length ? s.gens : [1, 2, 3, 4, 5, 6, 7, 8];
+  var gens = s.gens && s.gens.length ? s.gens : GEN_TABLE.map(function (g) { return g.gen; });
   for (var i = 0; i < gens.length; i++) {
     if (countForGen(gens[i], 1 << src.bit) > 0) return true;
   }
@@ -149,12 +136,36 @@ function rangeLabel(settings) {
   return genLabelList(s) + ' × ' + sourceLabelList(s) + ' ＝ ' + n + ' 種';
 }
 
-/* ---------- 抽選（同一ゲーム内で重複しない） ----------
-   pool: 出題候補の ID 配列 */
-function pickIds(count, pool, exclude) {
+/* ---------- 抽選 ----------
+   pool:  出題候補の ID 配列
+   exclude: 同一ゲーム内ですでに出した ID（必ず除外する）
+   asked: 端末に残っている出題履歴（古い順）。渡すと、
+          まだ出していないポケモンを優先し、足りなければ古く出したものから使う。
+          未指定なら従来どおり pool から一様ランダム。 */
+function pickIds(count, pool, exclude, asked) {
   var used = {};
   (exclude || []).forEach(function (id) { used[id] = true; });
   var rest = (pool || []).filter(function (id) { return !used[id]; });
+
+  if (!asked || !asked.length) return drawRandom(count, rest);
+
+  var rank = {};                       // 小さいほど昔に出した
+  asked.forEach(function (id, i) { rank[id] = i; });
+
+  var fresh = [];
+  var stale = [];
+  rest.forEach(function (id) { (rank[id] === undefined ? fresh : stale).push(id); });
+  stale.sort(function (a, b) { return rank[a] - rank[b]; });   // 古い順
+
+  var picked = drawRandom(count, fresh);
+  // まだ出していないものだけで足りなければ、出したのが古い順に補う
+  for (var i = 0; picked.length < count && i < stale.length; i++) picked.push(stale[i]);
+  return picked;
+}
+
+/* 配列から重複なくランダムに count 個 */
+function drawRandom(count, list) {
+  var rest = (list || []).slice();
   var picked = [];
   while (picked.length < count && rest.length) {
     var i = Math.floor(Math.random() * rest.length);
@@ -239,7 +250,7 @@ function chooseFlavor(entries, names, versions) {
 }
 
 /* 出題用の伏字済みテキストを作る
-   species: pokeapi.js が返す整形済みオブジェクト
+   species: dexsource.js が返す整形済みオブジェクト
    versions: 出典で絞るバージョン slug 配列（null ならおまかせ） */
 function buildQuestionText(species, versions) {
   var names = [species.nameJa, species.evolvesFromJa].filter(Boolean);

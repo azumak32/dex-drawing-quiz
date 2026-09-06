@@ -65,7 +65,11 @@
         <div class="choice-grid" id="sourceButtons"></div>
         <button type="button" class="btn btn-choice btn-sub is-on" id="btnSourceAny">おまかせ（すべてのソフトから）</button>
         <p class="hint">日本語の図鑑説明は、X・Y 以降のソフトにしか存在しません（赤緑・金銀・RSE・DPP・BW の日本語テキストは公開データにありません）。初代のポケモンは <b>Let's Go!</b> を選ぶと、当時に近い文面になります。</p>
-        <p class="range-note" id="rangeNote">出題範囲：全世代 × おまかせ（すべてのソフト） ＝ 898 種</p>
+        <p class="range-note" id="rangeNote">出題範囲：全世代 × おまかせ（すべてのソフト） ＝ 1025 種</p>
+        <p class="range-history">
+          <span id="askedNote">この端末での出題ずみ：なし</span>
+          <button type="button" class="btn btn-mini" id="btnClearAsked">履歴をリセット</button>
+        </p>
       </div>
 
       <!-- プレイヤー登録 -->
@@ -107,19 +111,6 @@
           </label>
         </div>
       </div>
-
-      <!-- オフライン対策 -->
-      <details class="panel accordion" id="offlinePanel">
-        <summary class="panel-title">オフライン対策<small>（当日ネットが無くても遊べるようにする）</small></summary>
-        <p class="hint">自宅の Wi-Fi につながっているうちに一度だけ押してください。898種の図鑑データを iPad の中に保存します（約3〜4分）。保存後は、ネットが無くても出題できます。</p>
-        <p class="offline-status" id="offlineStatus">保存済み：0 / 898 種</p>
-        <div class="loadbar"><div class="loadbar-fill" id="offlineBar"></div></div>
-        <div class="row-2">
-          <button type="button" class="btn btn-primary" id="btnSaveAll">図鑑データを端末に保存</button>
-          <button type="button" class="btn" id="btnClearCache">保存したデータを消す</button>
-        </div>
-        <p class="hint" id="offlineHint">※ ホーム画面に追加しておくと、アプリのように起動できます（共有ボタン →「ホーム画面に追加」）。</p>
-      </details>
 
       <!-- 説明 -->
       <details class="panel accordion" id="howto" open>
@@ -281,10 +272,14 @@
 <!-- ===== トースト ===== -->
 <div class="toast" id="toast" hidden></div>
 
+<div id="bootOverlay" class="boot-overlay">
+  <p class="boot-title">図鑑データを準備しています…</p>
+  <div class="loadbar"><div class="loadbar-fill" id="bootBar"></div></div>
+  <p class="boot-note" id="bootNote">初回だけ少し時間がかかります（約450KB）</p>
+</div>
 <script src="js/state.js"></script>
-<script src="js/flavor_index.js"></script>
 <script src="js/dexdata.js"></script>
-<script src="js/pokeapi.js"></script>
+<script src="js/dexsource.js"></script>
 <script src="js/judge.js"></script>
 <script src="js/canvas.js"></script>
 <script src="js/sfx.js"></script>
