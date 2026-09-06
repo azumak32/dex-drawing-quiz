@@ -47,7 +47,21 @@
       <button type="button" class="btn btn-primary btn-jumbo" id="btnQuickStart">▶ すぐに始める</button>
       <p class="hint hint-center">えらんだ出題範囲・協力モード・時間制限なしで、すぐに1問はじまります。</p>
 
-<!-- 出題範囲 -->
+      <!-- 説明 -->
+      <details class="panel accordion" id="howto" open>
+        <summary class="panel-title">遊びかた・モード説明</summary>
+        <ol class="howto-list">
+          <li>出題者ひとりが、ポケモンの<b>図鑑解説文だけ</b>を見ます（名前と図鑑Noは伏せられています）。</li>
+          <li>出題者はその文章をヒントに、そのポケモンの絵を描きます。</li>
+          <li>ほかの人は絵を見て、どのポケモンかを当てます。</li>
+          <li>全員が1回ずつ出題者を担当したら結果発表です。</li>
+        </ol>
+        <p class="howto-note"><b>対戦モード</b>：解答者はひとりずつ順番に答えます。前の人の答えは見えません。<br>
+          点数は「<b>解答力</b>＝自分が当てた数」と「<b>伝達力</b>＝自分の絵で当ててもらえた人数」の合計です。</p>
+        <p class="howto-note"><b>協力モード</b>：みんなで相談して答えをひとつ出します。チームで何問正解できるかに挑戦。</p>
+      </details>
+
+      <!-- 出題範囲 -->
       <details class="panel accordion" open>
         <summary class="panel-title">① 出題するポケモン<small>（世代・複数えらべます）</small></summary>
         <p class="hint">その世代で<b>新しく登場した</b>ポケモンだけが出ます。複数えらぶと混ざります。</p>
@@ -58,7 +72,7 @@
         </div>
       </details>
 
-<!-- 図鑑説明の出典 -->
+      <!-- 図鑑説明の出典 -->
       <details class="panel accordion" open>
         <summary class="panel-title">② 図鑑説明の出典<small>（ソフト・複数えらべます）</small></summary>
         <p class="hint">お題に使う図鑑説明を、どのソフトのものにするか選べます。</p>
@@ -72,16 +86,16 @@
         </p>
       </details>
 
-<!-- モード -->
+      <!-- モード -->
       <details class="panel accordion" open>
         <summary class="panel-title">③ あそびかた<small>（対戦か協力か）</small></summary>
         <div class="row-2">
-          <button type="button" class="btn btn-choice is-on" id="btnModeVs" data-mode="vs">対戦モード<small>ひとりずつ解答・ランキングあり</small></button>
-          <button type="button" class="btn btn-choice" id="btnModeCoop" data-mode="coop">協力モード<small>みんなで相談して1つの答え</small></button>
+          <button type="button" class="btn btn-choice is-on" id="btnModeCoop" data-mode="coop">協力モード<small>みんなで相談して1つの答え</small></button>
+          <button type="button" class="btn btn-choice" id="btnModeVs" data-mode="vs">対戦モード<small>ひとりずつ解答・ランキングあり</small></button>
         </div>
       </details>
 
-<!-- プレイヤー登録 -->
+      <!-- プレイヤー登録 -->
       <details class="panel accordion" id="playerPanel">
         <summary class="panel-title">④ プレイヤー登録<small>（対戦モードのときだけ必要・最大10人）</small></summary>
         <div class="players" id="playerList"></div>
@@ -93,7 +107,7 @@
         <div class="order-result" id="orderResult" hidden></div>
       </details>
 
-<!-- 時間制限 -->
+      <!-- 時間制限 -->
       <details class="panel accordion" open>
         <summary class="panel-title">⑤ 時間制限</summary>
         <div class="row-2">
@@ -110,20 +124,6 @@
             <input type="range" id="answerSec" min="10" max="120" step="5" value="30">
           </label>
         </div>
-      </details>
-
-      <!-- 説明 -->
-      <details class="panel accordion" id="howto" open>
-        <summary class="panel-title">遊びかた・モード説明</summary>
-        <ol class="howto-list">
-          <li>出題者ひとりが、ポケモンの<b>図鑑解説文だけ</b>を見ます（名前と図鑑Noは伏せられています）。</li>
-          <li>出題者はその文章をヒントに、そのポケモンの絵を描きます。</li>
-          <li>ほかの人は絵を見て、どのポケモンかを当てます。</li>
-          <li>全員が1回ずつ出題者を担当したら結果発表です。</li>
-        </ol>
-        <p class="howto-note"><b>対戦モード</b>：解答者はひとりずつ順番に答えます。前の人の答えは見えません。<br>
-          点数は「<b>解答力</b>＝自分が当てた数」と「<b>伝達力</b>＝自分の絵で当ててもらえた人数」の合計です。</p>
-        <p class="howto-note"><b>協力モード</b>：みんなで相談して答えをひとつ出します。チームで何問正解できるかに挑戦。</p>
       </details>
 
       <button type="button" class="btn btn-primary btn-jumbo" id="btnStartGame">この設定でゲーム開始</button>

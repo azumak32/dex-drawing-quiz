@@ -49,7 +49,8 @@ function shuffle(arr) {
 var DEFAULT_SETTINGS = {
   gens: [1, 2, 3, 4, 5, 6, 7, 8, 9],  // 出題する世代（その世代で新登場した種のみ・複数選択）
   sources: [],       // 図鑑説明の出典ソフト（空配列＝おまかせ＝すべて）
-  mode: 'vs',        // 'vs' 対戦 | 'coop' 協力
+  mode: 'coop',      // 'coop' 協力（既定） | 'vs' 対戦
+                     //   対戦はプレイヤー登録が要るので、既定は登録なしで始められる協力にする
   timer: false,      // 時間制限あり/なし
   drawSec: 90,
   answerSec: 30
@@ -65,7 +66,7 @@ function makePlayer(name, remote) {
 
 function newState() {
   return {
-    version: 2,        // 設定の形を変えたら上げる（旧セッションは復帰させない）
+    version: 3,        // 設定の形を変えたら上げる（旧セッションは復帰させない）
     screen: 's1',
     settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
     players: [makePlayer(''), makePlayer('')],
@@ -109,7 +110,7 @@ function loadSavedState() {
     var raw = sessionStorage.getItem(SS_KEY);
     if (!raw) return null;
     var obj = JSON.parse(raw);
-    if (!obj || obj.version !== 2) return null;
+    if (!obj || obj.version !== 3) return null;
     return obj;
   } catch (e) { return null; }
 }
