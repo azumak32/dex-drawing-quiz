@@ -60,11 +60,11 @@
 
       <!-- 図鑑説明の出典 -->
       <div class="panel">
-        <h2 class="panel-title">② 図鑑説明の出典<small>（複数えらべます）</small></h2>
+        <h2 class="panel-title">② 図鑑説明の出典<small>（ソフト・複数えらべます）</small></h2>
         <p class="hint">お題に使う図鑑説明を、どのソフトのものにするか選べます。</p>
         <div class="choice-grid" id="sourceButtons"></div>
         <button type="button" class="btn btn-choice btn-sub is-on" id="btnSourceAny">おまかせ（すべてのソフトから）</button>
-        <p class="hint">日本語の図鑑説明は、X・Y 以降のソフトにしか存在しません（赤緑・金銀・RSE・DPP・BW の日本語テキストは公開データにありません）。初代のポケモンは <b>Let's Go!</b> を選ぶと、当時に近い文面になります。</p>
+        <p class="hint">赤・緑から スカーレット・バイオレット まで、実際のゲームに載っていた文面をそのまま出します。同じポケモンでもソフトによって文面が違うので、えらぶと雰囲気が変わります。<b>初代のポケモンを当時の文面で</b>遊びたいときは「赤・緑・青・ピカチュウ」をどうぞ。</p>
         <p class="range-note" id="rangeNote">出題範囲：全世代 × おまかせ（すべてのソフト） ＝ 1025 種</p>
         <p class="range-history">
           <span id="askedNote">この端末での出題ずみ：なし</span>
@@ -132,10 +132,10 @@
     <!-- ================= S1.5 プリフェッチ ================= -->
     <section class="screen" id="s15">
       <div class="lcd lcd-loading">
-        <p class="loading-title">図鑑データを読み込み中…</p>
+        <p class="loading-title">出題を用意しています…</p>
         <p class="loading-count" id="loadingCount">0 / 0</p>
         <div class="loadbar"><div class="loadbar-fill" id="loadingBar"></div></div>
-        <p class="loading-note" id="loadingNote">通信は今だけ。読み込みが終われば、途中でネットが切れても最後まで遊べます。</p>
+        <p class="loading-note" id="loadingNote">図鑑データは起動時に読み込みずみです。ここでは通信しません。</p>
       </div>
       <div class="pokeball-spin" id="loadingBall" aria-hidden="true"></div>
       <button type="button" class="btn" id="btnLoadingCancel">中止して設定に戻る</button>
@@ -244,7 +244,7 @@
     <p>ポケットモンスター・ポケモン・Pokémon は 任天堂・クリーチャーズ・ゲームフリーク の登録商標です。</p>
     <p>©1995-2026 Nintendo / Creatures Inc. / GAME FREAK inc.</p>
     <p>本サイトはファンによる非公式・非営利の制作物であり、任天堂株式会社・株式会社ポケモン・株式会社クリーチャーズ・株式会社ゲームフリーク とは一切関係ありません。</p>
-    <p>図鑑データの取得に PokéAPI (https://pokeapi.co) を利用しています。</p>
+    <p>図鑑データの取得に PokéAPI (https://pokeapi.co) と towakey/pokedex (https://github.com/towakey/pokedex) を利用しています。いずれも有志による非公式プロジェクトで、任天堂・株式会社ポケモンとは無関係です。</p>
   </footer>
 </div>
 
@@ -275,7 +275,7 @@
 <div id="bootOverlay" class="boot-overlay">
   <p class="boot-title">図鑑データを準備しています…</p>
   <div class="loadbar"><div class="loadbar-fill" id="bootBar"></div></div>
-  <p class="boot-note" id="bootNote">初回だけ少し時間がかかります（約450KB）</p>
+  <p class="boot-note" id="bootNote">初回だけ約1MB を読み込みます。次からは端末内のキャッシュで起動するので待ちません。</p>
 </div>
 <script src="js/state.js"></script>
 <script src="js/dexdata.js"></script>

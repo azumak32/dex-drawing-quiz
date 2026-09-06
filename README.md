@@ -131,12 +131,13 @@ pokemon_quiz/
 **このアプリは図鑑テキストを一切ホストしません。** リポジトリにも GitHub Pages にも
 1文字も置かず、閲覧者のブラウザが配布元から直接取得します。理由は下の「方針」を参照。
 
-取得元は2つで、**初回に 3 リクエストだけ**です。
+取得元は2つで、**初回に 3 リクエスト・合計約1MB**（いずれも gzip 転送）だけです。
+2回目以降は端末内のキャッシュから読むので通信しません。
 
 | 取得元 | 何を取るか | 量 |
 |---|---|---|
-| [towakey/pokedex](https://github.com/towakey/pokedex)（jsDelivr 経由） | 赤・緑〜SV の日本語説明文、名前、分類 | 2ファイル・約450KB（gzip） |
-| [PokeAPI](https://pokeapi.co) の GraphQL | X・Y 以降の日本語説明文、タイプ、進化前 | 1リクエスト・約1.3MB |
+| [towakey/pokedex](https://github.com/towakey/pokedex)（jsDelivr 経由） | 赤・緑〜SV の日本語説明文、名前、分類 | 2ファイル・約590KB |
+| [PokeAPI](https://pokeapi.co) の GraphQL | X・Y 以降の日本語説明文、タイプ、進化前 | 1リクエスト・約435KB |
 
 この2つは互いの穴を埋め合います。PokeAPI に日本語説明文があるのは X・Y 以降の6ソフト・
 No.1〜898 だけで、towakey は逆に ORAS と Let's Go がほぼ空です。重ねると全 1025 種が埋まります。

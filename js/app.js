@@ -364,8 +364,8 @@ function runPrefetch() {
     if (prefetchAborted) return;
     console.error(err);
     $id('loadingNote').textContent =
-      '図鑑データを取得できませんでした。ネット接続を確認して、もう一度お試しください。';
-    toast('通信に失敗しました');
+      '出題を用意できませんでした。出題範囲をえらび直してみてください。';
+    toast('出題を用意できませんでした');
   });
 }
 
@@ -1013,7 +1013,8 @@ function restoreScreen() {
 }
 
 /* =========================================================
-   オフライン対策（図鑑データの端末保存 / Service Worker）
+   Service Worker（一度開けば、以後ネットが無くても起動できる）
+   図鑑データ自体は dexsource.js が Cache Storage に保存する。
    ========================================================= */
 
 function registerServiceWorker() {
