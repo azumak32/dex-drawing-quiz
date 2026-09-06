@@ -4,7 +4,7 @@
    （HTTPS または localhost でのみ動作。GitHub Pages は HTTPS なので有効）
    ========================================================= */
 
-var CACHE = 'pq-shell-v6';
+var CACHE = 'pq-shell-v7';
 var API_CACHE = 'pq-api-v1';
 
 var SHELL = [
@@ -46,17 +46,15 @@ self.addEventListener('fetch', function (e) {
 
   var url = new URL(req.url);
 
-  /* 自分自身のファイル：キャッシュ優先（オフラインでも起動できる） */
+  /* 自分自身のファイル：ネット優先・つながらなければキャッシュ。
+     キャッシュ優先にすると、更新してもホーム画面に追加した端末に
+     古い版が残り続けてしまう（更新が1回遅れて届く）。
+     会場でネットが無い場合に備え、2.5秒で見切ってキャッシュに切り替える。 */
   if (url.origin === location.origin) {
     e.respondWith(
-      caches.match(req).then(function (hit) {
-        if (hit) return hit;
-        return fetch(req).then(function (res) {
-          var copy = res.clone();
-          caches.open(CACHE).then(function (c) { c.put(req, copy); });
-          return res;
-        }).catch(function () {
-          return caches.match('./index.html');
+      networkFirst(req).catch(function () {
+        return caches.match(req).then(function (hit) {
+          return hit || caches.match('./index.html');
         });
       })
     );
@@ -96,3 +94,28 @@ self.addEventListener('fetch', function (e) {
     );
   }
 });
+
+/* ネットを先に試し、2.5秒で応答が無ければあきらめる。
+   取れた分は必ずキャッシュに書き戻すので、次はオフラインでも開ける。 */
+function networkFirst(req) {
+  return new Promise(function (resolve, reject) {
+    var settled = false;
+    var timer = setTimeout(function () {
+      if (!settled) { settled = true; reject(new Error('timeout')); }
+    }, 2500);
+
+    fetch(req).then(function (res) {
+      if (res && res.status === 200) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(req, copy); });
+      }
+      if (settled) return;           // 時間切れ後に届いた分もキャッシュだけ更新する
+      settled = true; clearTimeout(timer);
+      resolve(res);
+    }).catch(function (err) {
+      if (settled) return;
+      settled = true; clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
