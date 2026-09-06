@@ -307,9 +307,15 @@
 /* ================= オフライン対策パネル ================= */
 .range-history{
   display:flex; align-items:center; justify-content:center; gap:10px;
+  flex-wrap:wrap;
   margin:6px 0 0; font-size:13px; color:var(--muted);
 }
-.btn-mini{ padding:3px 10px; font-size:12px; line-height:1.6; border-radius:999px; min-height:0; }
+/* .btn は width:100% なので、そのままだと横幅を食って文言が折り返す */
+.btn-mini{
+  width:auto; flex:0 0 auto;
+  padding:3px 12px; font-size:12px; line-height:1.6;
+  border-radius:999px; min-height:0;
+}
 
 /* 起動時のローディング（図鑑データの取得中だけ出る） */
 .boot-overlay{
