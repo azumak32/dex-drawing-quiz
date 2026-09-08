@@ -393,7 +393,12 @@ function initDexViewer() {
     timer = setTimeout(applyDexSearch, 160);   // 1文字ごとに1025件を走査しないように少し待つ
   });
   input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    // 日本語入力の変換確定 Enter をここで止めると、確定した文字がもう一度入って
+    // 二重入力になる。app.js の #answerInput と同じ判定でよける。
+    if (e.key !== 'Enter') return;
+    if (e.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    input.blur();
   });
 
   $id('btnDexClear').addEventListener('click', function () {

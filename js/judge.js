@@ -87,6 +87,28 @@ function levenshtein(a, b) {
   return prev[bl];
 }
 
+/* 実在するポケモンの名前（正規化ずみ）の集合。
+   1文字ちがいの救済が「別の実在するポケモン」に当たるのを防ぐために使う。
+   図鑑データを読み終えてから初めて作り、以後は使い回す。
+   Dex がまだ無い場合（自己テストなど）は null を返し、救済は従来どおり働く。 */
+var REAL_NAME_SET = null;
+
+function realNameSet() {
+  if (REAL_NAME_SET) return REAL_NAME_SET;
+  if (typeof Dex === 'undefined' || !Dex || !Dex.species) return null;
+  var set = {};
+  var n = 0;
+  Object.keys(Dex.species).forEach(function (id) {
+    var name = Dex.species[id] && Dex.species[id].n;
+    if (!name) return;
+    set[applyAlias(normalizeAnswer(name))] = true;
+    n++;
+  });
+  if (!n) return null;
+  REAL_NAME_SET = set;
+  return REAL_NAME_SET;
+}
+
 /* 判定本体。correctName は日本語名（例: 'ヒトカゲ'） */
 function judgeAnswer(input, correctName) {
   var a = applyAlias(normalizeAnswer(input));
@@ -94,8 +116,14 @@ function judgeAnswer(input, correctName) {
   if (!a) return false;
   if (a === b) return true;
 
-  // 4文字以上のときだけ、1文字ちがいを正解とみなす
+  // 4文字以上のときだけ、1文字ちがいを正解とみなす（打ち間違いの救済）
   if (b.length >= 4 && Math.abs(a.length - b.length) <= 1) {
+    /* ただし、入力そのものが「別の実在するポケモンの名前」なら不正解にする。
+       打ち間違いではなく、はっきり別のポケモンを答えているため。
+       例: チゴラス に ガチゴラス、ドククラゲ に リククラゲ、ニドラン♀ に ニドラン♂。
+       いずれも1文字ちがいなので、この判定が無いと正解になってしまう。 */
+    var real = realNameSet();
+    if (real && real[a]) return false;
     if (levenshtein(a, b) <= 1) return true;
   }
   return false;
@@ -117,8 +145,18 @@ function judgeSelfTest() {
     ['フシギダナ', 'フシギダネ', true],
     ['ヒトカゲ', 'リザード', false],
     ['', 'ピカチュウ', false],
-    ['ゲンガー', 'ゴンガー', true],
-    ['カビゴン', 'カイリュー', false]
+    ['ゴンガー', 'ゲンガー', true],   // 実在しない打ち間違い → 救済する
+    ['カビゴン', 'カイリュー', false],
+    // 1文字ちがいでも、入力が別の実在ポケモンなら不正解にする（要 Dex）
+    ['ガチゴラス', 'チゴラス', false],
+    ['チゴラス', 'ガチゴラス', false],
+    ['リククラゲ', 'ドククラゲ', false],
+    ['ドククラゲ', 'リククラゲ', false],
+    ['ニドラン♂', 'ニドラン♀', false],
+    // 実在しない打ち間違いは今までどおり救済する
+    ['フシギダナ', 'フシギダネ', true],
+    ['ガチゴラズ', 'ガチゴラス', true],
+    ['ドククラゴ', 'ドククラゲ', true]
   ];
   var ng = 0;
   cases.forEach(function (c) {
