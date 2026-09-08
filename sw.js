@@ -4,7 +4,7 @@
    （HTTPS または localhost でのみ動作。GitHub Pages は HTTPS なので有効）
    ========================================================= */
 
-var CACHE = 'pq-shell-v10';
+var CACHE = 'pq-shell-v11';
 var API_CACHE = 'pq-api-v1';
 
 var SHELL = [

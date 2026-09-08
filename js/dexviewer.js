@@ -48,6 +48,7 @@ function buildDexIndex() {
       id: id,
       name: name,
       norm: normalizeAnswer(name),          // judge.js の正規化（ひら/カタ/長音を吸収）
+      roma: name ? romajiKey(applyAlias(normalizeAnswer(name))) : '',   // ローマ字検索用
       genus: sp.genusJa || '',
       prev: sp.evolvesFromJa || '',
       gen: genOfId(id),
@@ -114,6 +115,21 @@ function dexSearch() {
   // 名前検索：前方一致を先、部分一致を後（分類にも当てる）
   var nq = normalizeAnswer(q);
   if (!nq) return base.map(function (e) { return e.id; });
+
+  /* 半角英数だけならローマ字入力とみなし、ローマ字でさがす。
+     「pika」で ピカチュウ、「rizado」で リザードン が出る。 */
+  if (isRomajiInput(nq)) {
+    var rq = romajiKey(nq);
+    var rpre = [], rmid = [];
+    base.forEach(function (e) {
+      if (!e.roma) return;
+      var at = e.roma.indexOf(rq);
+      if (at === 0) rpre.push(e.id);
+      else if (at > 0) rmid.push(e.id);
+    });
+    var rhits = rpre.concat(rmid);
+    if (rhits.length) return rhits;
+  }
   var pre = [], mid = [], gen = [];
   base.forEach(function (e) {
     var at = e.norm.indexOf(nq);
