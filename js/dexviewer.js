@@ -19,9 +19,6 @@ var ZUKAN_TOP = 'https://zukan.pokemon.co.jp/';
 /* 個別ページは4桁ゼロ埋め（https://zukan.pokemon.co.jp/detail/0025 で 200 を確認ずみ） */
 function zukanDetailUrl(id) { return ZUKAN_TOP + 'detail/' + ('000' + id).slice(-4); }
 
-/* 一覧は一度にこの件数だけ描く（公開版はアートワークを1枚ずつ取りに行くため） */
-var DEX_PAGE = 60;
-
 /* タイプチップの並び順（TYPE_COLOR は unknown / shadow を含むので、本編の18種だけ使う） */
 var DEX_TYPE_ORDER = [
   'normal', 'fire', 'water', 'electric', 'grass', 'ice',
@@ -33,7 +30,7 @@ var dexIndex = null;               /* [{id, name, norm, genus, gen, types:[slug]
 var dexById = {};                  /* id → 上の要素（一覧の描画で毎回さがさないため） */
 var dexFilter = { q: '', gens: [], types: [] };
 var dexResult = [];                /* 現在の絞り込み結果（ID の配列） */
-var dexShown = 0;                  /* そのうち何件を描画ずみか */
+var dexNextOf = {};                /* id → 進化後の id 配列（索引から逆引きして作る） */
 var dexReturn = 's1';              /* 「もどる」の行き先 */
 var dexCurrentId = 0;              /* 詳細で表示中のポケモン */
 
@@ -52,12 +49,26 @@ function buildDexIndex() {
       name: name,
       norm: normalizeAnswer(name),          // judge.js の正規化（ひら/カタ/長音を吸収）
       genus: sp.genusJa || '',
+      prev: sp.evolvesFromJa || '',
       gen: genOfId(id),
       types: (Dex.types[id] || Dex.types[String(id)] || []).slice()
     };
     dexIndex.push(entry);
     dexById[id] = entry;
   }
+
+  /* 図鑑データが持っているのは「進化前の名前」だけなので、
+     進化後はここで逆引きして作る（イーブイのように複数に分かれるものもある）。 */
+  var idOfName = {};
+  dexIndex.forEach(function (e) { if (e.name) idOfName[e.name] = e.id; });
+  dexNextOf = {};
+  dexIndex.forEach(function (e) {
+    if (!e.prev) return;
+    var from = idOfName[e.prev];
+    if (!from) return;
+    (dexNextOf[from] = dexNextOf[from] || []).push(e.id);
+  });
+
   return dexIndex;
 }
 
@@ -110,10 +121,16 @@ function dexSearch() {
     else if (at > 0) mid.push(e.id);
     else if (e.genus && e.genus.indexOf(q) >= 0) gen.push(e.id);
   });
-  var hits = pre.concat(mid, gen);
-  if (hits.length) return hits;
 
-  /* 1件も無いときだけ、クイズの判定（judge.js）にかける。
+  /* 名前で当たったものを優先する。
+     分類まで一緒に出すと、名前とは関係のない種が混ざることがある
+     （分類名の一部にたまたま同じ字が入るため）。一覧に分類を出していないので
+     利用者には理由が分からない。したがって名前で0件のときだけ分類を使う。 */
+  var hits = pre.concat(mid);
+  if (hits.length) return hits;
+  if (gen.length) return gen;
+
+  /* それでも0件のときだけ、クイズの判定（judge.js）にかける。
      「ピカチュー」のような長音ゆれや1文字ちがいをここで救う。 */
   base.forEach(function (e) {
     if (e.name && judgeAnswer(q, e.name)) hits.push(e.id);
@@ -169,63 +186,89 @@ function renderDexFilters() {
 
 function applyDexSearch() {
   dexResult = dexSearch();
-  dexShown = 0;
-  $id('dexList').innerHTML = '';
   $id('dexCount').textContent = dexResult.length + ' 件';
   $id('dexEmpty').hidden = dexResult.length > 0;
-  renderDexPage();
+  renderDexSections();
 }
 
-/* 60件ずつ描き足す。公開版はアートワークを1枚ずつ取りに行くので、
-   1025件を一度に並べると重い。 */
-function renderDexPage() {
+/* 検索中・タイプ指定中はセクションを開いて見せる（世代ボタンだけのときは開かない） */
+function dexIsSearching() {
+  return !!(dexFilter.q || '').trim() || dexFilter.types.length > 0;
+}
+
+/* 一覧は世代ごとのアコーディオン。既定は閉じておく。
+   画像は出さず、図鑑No. と名前だけを並べる。 */
+function renderDexSections() {
   var wrap = $id('dexList');
-  var end = Math.min(dexShown + DEX_PAGE, dexResult.length);
-  for (var i = dexShown; i < end; i++) {
-    wrap.appendChild(dexCard(dexResult[i]));
-  }
-  dexShown = end;
-  var more = $id('btnDexMore');
-  more.hidden = dexShown >= dexResult.length;
-  more.textContent = 'もっと見る（あと ' + (dexResult.length - dexShown) + ' 件）';
+  wrap.innerHTML = '';
+
+  var byGen = {};
+  dexResult.forEach(function (id) {
+    var g = (dexById[id] && dexById[id].gen) || 0;
+    (byGen[g] = byGen[g] || []).push(id);
+  });
+
+  var openAll = dexIsSearching();
+
+  GEN_TABLE.forEach(function (g) {
+    var ids = byGen[g.gen];
+    if (!ids || !ids.length) return;
+    ids.sort(function (a, b) { return a - b; });
+
+    var box = document.createElement('details');
+    box.className = 'panel accordion dexsection';
+
+    var sum = document.createElement('summary');
+    sum.className = 'panel-title';
+    sum.textContent = g.label;
+    var small = document.createElement('small');
+    small.textContent = '（' + g.games + '／' + ids.length + '種）';
+    sum.appendChild(small);
+    box.appendChild(sum);
+
+    var rows = document.createElement('div');
+    rows.className = 'dexrows';
+    box.appendChild(rows);
+
+    /* 1025 件ぶんの行を最初から作らず、開いたときに作る */
+    var filled = false;
+    function fill() {
+      if (filled) return;
+      filled = true;
+      ids.forEach(function (id) { rows.appendChild(dexRow(id)); });
+    }
+    if (openAll) { box.open = true; fill(); }
+    else { box.addEventListener('toggle', function () { if (box.open) fill(); }); }
+
+    wrap.appendChild(box);
+  });
 }
 
-function dexCard(id) {
-  var e = dexById[id] || { id: id, name: '', types: [] };
-
-  var card = document.createElement('button');
-  card.type = 'button';
-  card.className = 'dexcell';
-
-  var thumb = document.createElement('span');
-  thumb.className = 'dexcell-img';
-  var img = document.createElement('img');
-  img.loading = 'lazy';
-  img.decoding = 'async';
-  img.alt = '';
-  img.src = artworkUrl(id);
-  img.addEventListener('error', function () { thumb.classList.add('is-broken'); });
-  thumb.appendChild(img);
-  card.appendChild(thumb);
+function dexRow(id) {
+  var e = dexById[id] || { id: id, name: '' };
+  var row = document.createElement('button');
+  row.type = 'button';
+  row.className = 'dexrow';
 
   var no = document.createElement('span');
-  no.className = 'dexcell-no';
+  no.className = 'dexrow-no';
   no.textContent = 'No.' + ('000' + id).slice(-4);
-  card.appendChild(no);
+  row.appendChild(no);
 
   var name = document.createElement('span');
-  name.className = 'dexcell-name';
+  name.className = 'dexrow-name';
   name.textContent = e.name || '？';
-  card.appendChild(name);
+  row.appendChild(name);
 
-  card.addEventListener('click', function () { openDexDetail(id); });
-  return card;
+  row.addEventListener('click', function () { openDexDetail(id); });
+  return row;
 }
 
 /* ---------------- 詳細 ---------------- */
 function openDexDetail(id) {
   var sp = speciesOf(id);
   if (!sp) { toast('このポケモンのデータがありません'); return; }
+  buildDexIndex();          // 進化後の逆引きに索引が要る
   dexCurrentId = id;
 
   $id('dexDetailNo').textContent = 'No.' + ('000' + id).slice(-4);
@@ -254,13 +297,24 @@ function openDexDetail(id) {
   probe.onerror = function () { wrap.classList.remove('has-img'); };
   probe.src = url;
 
-  /* 進化前 */
+  /* 進化前・進化後（進化後は索引から逆引きしたもの。イーブイのように複数のこともある） */
   var evo = $id('dexDetailEvo');
   if (sp.evolvesFromJa) {
     evo.hidden = false;
     evo.textContent = '進化前： ' + sp.evolvesFromJa;
   } else {
     evo.hidden = true;
+  }
+
+  var next = $id('dexDetailEvoNext');
+  var nextIds = dexNextOf[id] || [];
+  if (nextIds.length) {
+    next.hidden = false;
+    next.textContent = '進化後： ' + nextIds.map(function (n) {
+      return (dexById[n] && dexById[n].name) || ('No.' + n);
+    }).join('・');
+  } else {
+    next.hidden = true;
   }
 
   renderDexFlavors(id);
@@ -351,8 +405,6 @@ function initDexViewer() {
     applyDexSearch();
     beep('tap');
   });
-
-  $id('btnDexMore').addEventListener('click', function () { renderDexPage(); beep('tap'); });
 
   function leaveViewer() {
     showScreen(dexReturn === 's5' ? 's5' : 's1');

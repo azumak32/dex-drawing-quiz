@@ -41,13 +41,13 @@
     <section class="screen is-active" id="s1">
       <div class="lcd lcd-title">
         <h1 class="game-title">ポケモン図鑑<span class="game-title-sub">クイズ</span></h1>
-        <p class="game-lead">図鑑の解説文だけを見て絵を描き、みんなでポケモンを当てよう！</p>
+        <p class="game-lead">図鑑の解説文だけを見て絵を描き、絵をもとにお題のポケモンを当てよう！</p>
       </div>
 
       <button type="button" class="btn btn-primary btn-jumbo" id="btnQuickStart">▶ すぐに始める</button>
       <p class="hint hint-center">えらんだ出題範囲・協力モード・時間制限なしで、すぐに1問はじまります。</p>
 
-      <button type="button" class="btn btn-sub" id="btnOpenDex">📖 ずかんを見る<small>クイズをしないで、ポケモンを検索して読む</small></button>
+      <button type="button" class="btn btn-sub" id="btnOpenDex">📖 ずかんを見る<small>ポケモン図鑑の説明文を見て予習する</small></button>
 
       <!-- 説明 -->
       <details class="panel accordion" id="howto" open>
@@ -64,7 +64,7 @@
       </details>
 
       <!-- 出題範囲 -->
-      <details class="panel accordion" open>
+      <details class="panel accordion">
         <summary class="panel-title">① 出題するポケモン<small>（世代・複数えらべます）</small></summary>
         <p class="hint">その世代で<b>新しく登場した</b>ポケモンだけが出ます。複数えらぶと混ざります。</p>
         <div class="choice-grid" id="genButtons"></div>
@@ -75,7 +75,7 @@
       </details>
 
       <!-- 図鑑説明の出典 -->
-      <details class="panel accordion" open>
+      <details class="panel accordion">
         <summary class="panel-title">② 図鑑説明の出典<small>（ソフト・複数えらべます）</small></summary>
         <p class="hint">お題に使う図鑑説明を、どのソフトのものにするか選べます。</p>
         <div class="choice-grid" id="sourceButtons"></div>
@@ -253,9 +253,10 @@
 
       <!-- 公式サイトへの導線（ユーザーの明示要求。常に見えるところに置くこと） -->
       <div class="official-box">
-        <p class="official-lead">このずかんは有志が公開しているデータをもとにした<b>ファン制作</b>です。</p>
-        <p class="official-lead">最新の情報・公式のイラスト・鳴き声などは、ぜひ<b>本家</b>でご覧ください。</p>
+        <p class="official-lead">このずかんは有志が公開しているデータや API をもとにした、当サイトの<b>ポケモン図鑑クイズの予習のためのページ</b>です。世代ごとの図鑑説明の違いをまとめています。並べてみるとその違いはとても面白いので、ぜひ暇な時間に読んでみてください。</p>
+        <p class="official-lead">より正確な最新情報は、これからもポケモンを盛り上げていくためにも、ぜひ<b>公式のページ</b>でお楽しみください。</p>
         <a class="btn btn-official" href="https://zukan.pokemon.co.jp/" target="_blank" rel="noopener noreferrer">ポケモンずかん（公式）をひらく ↗</a>
+        <p class="official-lead official-caution">なお、公式や有志のページより公開されているデータを取得しておりますので、本家様よりご指摘があった場合などには、このサイトは予告なく終了する場合があります。予めご了承ください。</p>
       </div>
 
       <div class="panel">
@@ -273,8 +274,7 @@
       </div>
 
       <p class="dex-note" id="dexEmpty" hidden>見つかりませんでした。ひらがな・カタカナ・図鑑No. でもさがせます。</p>
-      <div class="dexgrid" id="dexList"></div>
-      <button type="button" class="btn" id="btnDexMore" hidden>もっと見る</button>
+      <div id="dexList"></div>
 
       <button type="button" class="btn btn-primary btn-jumbo" id="btnDexBack">◀ もどる</button>
     </section>
@@ -296,6 +296,7 @@
         </div>
       </div>
       <p class="dex-evo" id="dexDetailEvo" hidden></p>
+      <p class="dex-evo" id="dexDetailEvoNext" hidden></p>
 
       <div class="official-box official-box-slim">
         <p class="official-lead">図鑑説明は歴代ソフトの文面です。<b>最新の公式情報はこちら</b>でどうぞ。</p>
@@ -304,7 +305,7 @@
 
       <div id="dexFlavors"></div>
 
-      <div class="row-2">
+      <div class="row-2 dex-nav">
         <button type="button" class="btn" id="btnDexPrev">◀ 前のポケモン</button>
         <button type="button" class="btn" id="btnDexNext">次のポケモン ▶</button>
       </div>
@@ -312,7 +313,7 @@
 
     <!-- ================= S8 累積ランキング（対戦モードのみ） ================= -->
     <section class="screen" id="s8">
-      <h2 class="result-title">累積ランキング</h2>
+      <h2 class="result-title">累積ランキング<span class="demo-tag">（デモ版）</span></h2>
       <p class="dex-note dex-note-center">対戦モードの記録だけがたまります（協力モードと「すぐに始める」は数えません）。<br>記録はこの端末のなかだけに残ります。</p>
 
       <p class="dex-note dex-note-center" id="statsEmpty" hidden>まだ記録がありません。<br>プレイヤーを登録して対戦モードで遊ぶと、ここにたまっていきます。</p>
@@ -347,6 +348,7 @@
     <p>©1995-2026 Nintendo / Creatures Inc. / GAME FREAK inc.</p>
     <p>本サイトはファンによる非公式・非営利の制作物であり、任天堂株式会社・株式会社ポケモン・株式会社クリーチャーズ・株式会社ゲームフリーク とは一切関係ありません。</p>
     <p>図鑑データの取得に PokéAPI (https://pokeapi.co) と towakey/pokedex (https://github.com/towakey/pokedex) を利用しています。いずれも有志による非公式プロジェクトで、任天堂・株式会社ポケモンとは無関係です。</p>
+    <p>このサイトは公式や有志のページより公開されているデータを取得しておりますので、当ページには著作データを一切埋め込んでおりませんが、本家様よりご指摘があった場合などにはすぐにこのサイトを予告なく終了する場合があります。予めご了承ください。</p>
   </footer>
 </div>
 
