@@ -47,6 +47,8 @@
       <button type="button" class="btn btn-primary btn-jumbo" id="btnQuickStart">▶ すぐに始める</button>
       <p class="hint hint-center">えらんだ出題範囲・協力モード・時間制限なしで、すぐに1問はじまります。</p>
 
+      <button type="button" class="btn btn-sub" id="btnOpenDex">📖 ずかんを見る<small>クイズをしないで、ポケモンを検索して読む</small></button>
+
       <!-- 説明 -->
       <details class="panel accordion" id="howto" open>
         <summary class="panel-title">遊びかた・モード説明</summary>
@@ -105,6 +107,11 @@
         </div>
         <p class="hint">「リモート」を ON にすると、その人の解答画面に「（代理入力）」と表示されます（ビデオ通話参加者用）。</p>
         <div class="order-result" id="orderResult" hidden></div>
+        <p class="hint">登録はこの端末におぼえます。次にひらいたときもそのまま使えます。</p>
+        <div class="row-2">
+          <button type="button" class="btn btn-sub" id="btnOpenStats">🏆 累積ランキング</button>
+          <button type="button" class="btn btn-sub" id="btnClearRoster">登録をぜんぶ消す</button>
+        </div>
       </details>
 
       <!-- 時間制限 -->
@@ -232,10 +239,104 @@
           <div class="rank-list" id="rankDraw"></div>
         </div>
       </div>
+      <button type="button" class="btn" id="btnStatsFromResult">🏆 これまでの累積ランキングを見る</button>
       <div class="row-2">
         <button type="button" class="btn btn-primary" id="btnPlayAgain">同じメンバーでもう一度</button>
         <button type="button" class="btn" id="btnBackToSetup">設定画面に戻る</button>
       </div>
+    </section>
+
+    <!-- ================= S6 図鑑ビューア（検索・一覧） ================= -->
+    <section class="screen" id="s6">
+      <button type="button" class="btn btn-sub dex-back-top" id="btnDexBackTop">◀ もどる</button>
+      <h2 class="result-title dex-h">ポケモンずかん</h2>
+
+      <!-- 公式サイトへの導線（ユーザーの明示要求。常に見えるところに置くこと） -->
+      <div class="official-box">
+        <p class="official-lead">このずかんは有志が公開しているデータをもとにした<b>ファン制作</b>です。</p>
+        <p class="official-lead">最新の情報・公式のイラスト・鳴き声などは、ぜひ<b>本家</b>でご覧ください。</p>
+        <a class="btn btn-official" href="https://zukan.pokemon.co.jp/" target="_blank" rel="noopener noreferrer">ポケモンずかん（公式）をひらく ↗</a>
+      </div>
+
+      <div class="panel">
+        <div class="dexsearch-row">
+          <input type="search" id="dexSearch" class="dexsearch" placeholder="名前か図鑑No.（例：ピカチュウ / 025）"
+                 autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+          <button type="button" class="btn btn-mini" id="btnDexClear">クリア</button>
+        </div>
+        <details class="panel-inner accordion">
+          <summary class="panel-title">世代・タイプでしぼる</summary>
+          <div class="dexchips" id="dexGenChips"></div>
+          <div class="dexchips" id="dexTypeChips"></div>
+        </details>
+        <p class="dex-count"><span id="dexCount">—</span></p>
+      </div>
+
+      <p class="dex-note" id="dexEmpty" hidden>見つかりませんでした。ひらがな・カタカナ・図鑑No. でもさがせます。</p>
+      <div class="dexgrid" id="dexList"></div>
+      <button type="button" class="btn" id="btnDexMore" hidden>もっと見る</button>
+
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnDexBack">◀ もどる</button>
+    </section>
+
+    <!-- ================= S7 図鑑ビューア（詳細） ================= -->
+    <section class="screen" id="s7">
+      <button type="button" class="btn" id="btnDexDetailBack">◀ 一覧にもどる</button>
+
+      <div class="dexcard">
+        <div class="dexcard-img" id="dexDetailImgWrap">
+          <img id="dexDetailImg" alt="">
+          <div class="dexcard-img-fallback">？</div>
+        </div>
+        <div class="dexcard-info">
+          <p class="dexcard-no" id="dexDetailNo">No.—</p>
+          <p class="dexcard-name" id="dexDetailName">—</p>
+          <p class="dexcard-genus" id="dexDetailGenus">—</p>
+          <p class="dexcard-types" id="dexDetailTypes"></p>
+        </div>
+      </div>
+      <p class="dex-evo" id="dexDetailEvo" hidden></p>
+
+      <div class="official-box official-box-slim">
+        <p class="official-lead">図鑑説明は歴代ソフトの文面です。<b>最新の公式情報はこちら</b>でどうぞ。</p>
+        <a class="btn btn-official" id="dexOfficialLink" href="https://zukan.pokemon.co.jp/" target="_blank" rel="noopener noreferrer">公式ずかんで見る ↗</a>
+      </div>
+
+      <div id="dexFlavors"></div>
+
+      <div class="row-2">
+        <button type="button" class="btn" id="btnDexPrev">◀ 前のポケモン</button>
+        <button type="button" class="btn" id="btnDexNext">次のポケモン ▶</button>
+      </div>
+    </section>
+
+    <!-- ================= S8 累積ランキング（対戦モードのみ） ================= -->
+    <section class="screen" id="s8">
+      <h2 class="result-title">累積ランキング</h2>
+      <p class="dex-note dex-note-center">対戦モードの記録だけがたまります（協力モードと「すぐに始める」は数えません）。<br>記録はこの端末のなかだけに残ります。</p>
+
+      <p class="dex-note dex-note-center" id="statsEmpty" hidden>まだ記録がありません。<br>プレイヤーを登録して対戦モードで遊ぶと、ここにたまっていきます。</p>
+
+      <div id="statsBody" hidden>
+        <div class="rank-block">
+          <h3 class="rank-title">総合（解答力＋伝達力）</h3>
+          <div class="rank-list" id="statsTotal"></div>
+        </div>
+        <div class="row-2 rank-2col">
+          <div class="rank-block">
+            <h3 class="rank-title">解答力（当てた数）</h3>
+            <div class="rank-list" id="statsAnswer"></div>
+          </div>
+          <div class="rank-block">
+            <h3 class="rank-title">伝達力（当てさせた数）</h3>
+            <div class="rank-list" id="statsDraw"></div>
+          </div>
+        </div>
+        <p class="dex-note dex-note-center" id="statsNote"></p>
+      </div>
+
+      <button type="button" class="btn btn-sub" id="btnClearStats">記録をぜんぶ消す</button>
+      <button type="button" class="btn btn-primary btn-jumbo" id="btnStatsBack">◀ もどる</button>
     </section>
 
   </main>
@@ -284,6 +385,7 @@
 <script src="js/judge.js"></script>
 <script src="js/canvas.js"></script>
 <script src="js/sfx.js"></script>
+<script src="js/dexviewer.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

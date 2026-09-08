@@ -3,7 +3,7 @@
    ========================================================= */
 
 /* ---------------- 画面遷移 ---------------- */
-var SCREENS = ['s1', 's15', 's2', 's3', 's4', 's5'];
+var SCREENS = ['s1', 's15', 's2', 's3', 's4', 's5', 's6', 's7', 's8'];
 
 function showScreen(id) {
   SCREENS.forEach(function (s) {
@@ -16,12 +16,16 @@ function showScreen(id) {
   saveState();
 }
 
+/* ゲームの進行に属さない画面（図鑑ビューア・累積ランキング）。
+   「n / m 問目」を出さないための一覧。 */
+var SIDE_SCREENS = ['s6', 's7', 's8'];
+
 /* 図鑑ヘッダー右上の状態表示 */
 function setTopStatus(text) {
   var el = $id('dexTopStatus');
   if (!el) return;
   if (typeof text === 'string') { el.textContent = text; return; }
-  if (State.order.length && State.screen !== 's1') {
+  if (State.order.length && SIDE_SCREENS.indexOf(State.screen) < 0 && State.screen !== 's1') {
     el.textContent = (State.round + 1) + ' / ' + State.order.length + ' 問目';
   } else {
     el.textContent = DEBUG ? 'DEBUG MODE' : '';
@@ -182,6 +186,7 @@ function renderPlayers() {
     input.addEventListener('input', function () {
       p.name = input.value;
       saveState();
+      saveRoster();          // 端末に名簿を残す（ブラウザを閉じても消えない）
     });
     row.appendChild(input);
 
@@ -195,6 +200,7 @@ function renderPlayers() {
       toggle.innerHTML = (p.remote ? '📡 リモート' : 'リモート');
       beep('tap');
       saveState();
+      saveRoster();
     });
     row.appendChild(toggle);
 
@@ -217,6 +223,7 @@ function renderPlayers() {
   });
   $id('btnAddPlayer').disabled = State.players.length >= MAX_PLAYERS;
   saveState();
+  saveRoster();
 }
 
 /* ---------- サイコロ（出題順を決める） ---------- */
@@ -850,6 +857,17 @@ function renderPodium(list) {
 
 function showResult() {
   var list = buildRanking();
+
+  /* 累積記録への加算はここ1回だけ。
+     - S4 で ○× を手直ししてから来るので、この時点の値が確定値になる
+     - リロードで S5 に復帰しても statsCommitted が立っているので二重に足さない
+     - 協力モードでは showResult 自体を呼ばないが、念のため mode でも守る */
+  if (State.settings.mode === 'vs' && !State.statsCommitted) {
+    commitVsStats(list);
+    State.statsCommitted = true;
+    saveState();
+  }
+
   renderPodium(list);
   renderRankList('rankTotal', list, 'total', '点');
   renderRankList('rankAnswer', list, 'answer', '問');
@@ -873,9 +891,89 @@ function playAgain() {
   State.coop = { total: 0, correct: 0 };
   State.finished = false;
   State.lastRoundScore = null;
+  State.statsCommitted = false;   // 別のゲームなので、あらためて加算する
   State.order.forEach(function (id) { ensureScore(id); });
   saveState();
   runPrefetch();
+}
+
+/* =========================================================
+   S8 累積ランキング画面（対戦モードの記録・端末に残る）
+
+   ユーザーの明言により **対戦モードだけ** 記録する。協力モードでは加算しない。
+   加算は showResult() の1回だけ（js/state.js の commitVsStats）。
+   ========================================================= */
+
+/* どの画面から来たか。戻るボタンの行き先に使う（S1 か S5 のどちらか）。 */
+var statsReturn = 's1';
+
+function openStats(from) {
+  statsReturn = from || 's1';
+  renderStats();
+  showScreen('s8');
+  beep('tap');
+}
+
+function renderStats() {
+  var list = statsRanking();
+  var empty = $id('statsEmpty');
+  var body = $id('statsBody');
+
+  if (!list.length) {
+    empty.hidden = false;
+    body.hidden = true;
+    $id('btnClearStats').disabled = true;
+    $id('statsNote').textContent = '';
+    return;
+  }
+  empty.hidden = true;
+  body.hidden = false;
+  $id('btnClearStats').disabled = false;
+
+  // 総合の行には称号のかわりに「n戦m勝」を出す（renderRankList が title を使う）
+  var games = 0;
+  list.forEach(function (e) {
+    e.title = e.games + '戦' + e.wins + '勝';
+    if (e.games > games) games = e.games;
+  });
+
+  renderRankList('statsTotal', list, 'total', '点');
+  renderRankList('statsAnswer', list, 'answer', '問');
+  renderRankList('statsDraw', list, 'draw', '人');
+
+  $id('statsNote').textContent =
+    list.length + ' 人ぶんの記録があります（いちばん多い人で ' + games + ' ゲーム）。';
+}
+
+/* ---------- 消す操作は二段階（1回目で確認・5秒で自動解除） ----------
+   押し間違いで消えると取り返せないので、記録と名簿の両方でこれを使う。 */
+function armConfirm(btnId, label, confirmLabel, action) {
+  var btn = $id(btnId);
+  if (!btn) return;
+  var armed = false;
+  var timer = null;
+
+  function disarm() {
+    clearTimeout(timer);
+    armed = false;
+    btn.textContent = label;
+    btn.classList.remove('btn-danger');
+  }
+
+  btn.addEventListener('click', function () {
+    if (!armed) {
+      armed = true;
+      btn.textContent = confirmLabel;
+      btn.classList.add('btn-danger');
+      clearTimeout(timer);
+      timer = setTimeout(disarm, 5000);
+      beep('tap');
+      return;
+    }
+    disarm();
+    action();
+    beep('tap');
+  });
 }
 
 /* =========================================================
@@ -1023,6 +1121,12 @@ function restoreScreen() {
     case 's5':
       showResult();
       break;
+    case 's6':
+    case 's7':
+    case 's8':
+      // 図鑑ビューアと累積ランキングはゲームの進行ではないので設定画面に戻す
+      showScreen('s1');
+      break;
     default:
       showScreen('s1');
   }
@@ -1046,6 +1150,13 @@ function registerServiceWorker() {
 
 /* ---------------- 初期化 ---------------- */
 function initApp() {
+  /* 端末に残っている名簿を先に反映する。
+     renderPlayers() が saveRoster() を呼ぶので、必ずそれより前に読むこと
+     （空の2行で名簿を上書きしてしまう）。進行中のゲームがあれば
+     tryResume() が sessionStorage 側の players で上書きする。 */
+  var roster = loadRoster();
+  if (roster && roster.length) State.players = roster;
+
   // デバッグナビ
   if (DEBUG) {
     var nav = $id('debugNav');
@@ -1119,6 +1230,28 @@ function initApp() {
     toast(n + ' 種の出題履歴を消しました');
   });
 
+  $id('btnOpenDex').addEventListener('click', function () { openDexViewer('s1'); });
+  $id('btnOpenStats').addEventListener('click', function () { openStats('s1'); });
+  $id('btnStatsFromResult').addEventListener('click', function () { openStats('s5'); });
+  $id('btnStatsBack').addEventListener('click', function () {
+    showScreen(statsReturn === 's5' ? 's5' : 's1');
+    beep('tap');
+  });
+  armConfirm('btnClearStats', '記録をぜんぶ消す', 'ほんとうに消す？（もう一度おす）', function () {
+    var n = clearStats();
+    renderStats();
+    toast(n + ' 人ぶんの記録を消しました');
+  });
+  armConfirm('btnClearRoster', '登録をぜんぶ消す', 'ほんとうに消す？（もう一度おす）', function () {
+    // 名簿だけを消す。累積記録（pq:stats）は残す。
+    clearRoster();
+    State.players = [makePlayer(''), makePlayer('')];
+    State.order = [];
+    $id('orderResult').hidden = true;
+    renderPlayers();
+    toast('プレイヤー登録を消しました（累積記録は残っています）');
+  });
+
   $id('btnQuickStart').addEventListener('click', function () { beep('ok'); startGame(true); });
   $id('btnStartGame').addEventListener('click', function () { beep('ok'); startGame(false); });
 
@@ -1162,6 +1295,7 @@ function initApp() {
   renderTimer();
 
   DrawPad.init();
+  initDexViewer();
   registerServiceWorker();
 
   // リロード復帰（続きがあれば確認ダイアログを出す）

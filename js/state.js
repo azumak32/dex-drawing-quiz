@@ -66,7 +66,7 @@ function makePlayer(name, remote) {
 
 function newState() {
   return {
-    version: 3,        // 設定の形を変えたら上げる（旧セッションは復帰させない）
+    version: 4,        // 設定の形を変えたら上げる（旧セッションは復帰させない）
     screen: 's1',
     settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
     players: [makePlayer(''), makePlayer('')],
@@ -81,6 +81,7 @@ function newState() {
     scores: {},         // { playerId: {answer:n, draw:n} }
     coop: { total: 0, correct: 0 },
     lastRoundScore: null,   // 現ラウンドで加算した分（○×の手動修正・リロード復帰用）
+    statsCommitted: false,  // 累積記録へ加算ずみか（対戦モードのみ・二重加算の防止）
     finished: false
   };
 }
@@ -110,7 +111,7 @@ function loadSavedState() {
     var raw = sessionStorage.getItem(SS_KEY);
     if (!raw) return null;
     var obj = JSON.parse(raw);
-    if (!obj || obj.version !== 3) return null;
+    if (!obj || obj.version !== 4) return null;
     return obj;
   } catch (e) { return null; }
 }
@@ -170,4 +171,124 @@ function clearAskedIds() {
   var n = loadAskedIds().length;
   try { localStorage.removeItem(ASKED_KEY); } catch (e) {}
   return n;
+}
+
+/* ---------- プレイヤー登録の永続化（localStorage・端末に残る） ----------
+   対戦モードで毎回名前を打ち直さずに済むようにする。
+   sessionStorage の State.players はゲーム進行中の作業用で、こちらが「元の名簿」。
+   保存するのは id / 名前 / リモート印だけ（得点は pq:stats 側）。 */
+var ROSTER_KEY = 'pq:roster';
+
+function loadRoster() {
+  try {
+    var raw = localStorage.getItem(ROSTER_KEY);
+    if (!raw) return null;
+    var a = JSON.parse(raw);
+    if (!Array.isArray(a) || !a.length) return null;
+    var out = [];
+    a.forEach(function (p) {
+      if (!p || typeof p.id !== 'string') return;
+      out.push({ id: p.id, name: String(p.name || ''), remote: !!p.remote });
+    });
+    return out.length ? out : null;
+  } catch (e) { return null; }
+}
+
+function saveRoster(players) {
+  var list = (players || State.players || []).map(function (p) {
+    return { id: p.id, name: p.name || '', remote: !!p.remote };
+  });
+  try { localStorage.setItem(ROSTER_KEY, JSON.stringify(list)); } catch (e) {}
+  // 名前を変えたら累積記録の表示名も追従させる（紐付けは id なので記録は消えない）
+  syncStatsNames(list);
+}
+
+function clearRoster() {
+  try { localStorage.removeItem(ROSTER_KEY); } catch (e) {}
+}
+
+/* ---------- 対戦モードの累積記録（localStorage・端末に残る） ----------
+   ユーザーの明言により **対戦モードだけ** 加算する。協力モードでは一切さわらない。
+   紐付けは player.id。名簿から消した人の記録も残るよう、名前も一緒に持つ。 */
+var STATS_KEY = 'pq:stats';
+
+function emptyStats() { return { version: 1, players: {} }; }
+
+function loadStats() {
+  try {
+    var raw = localStorage.getItem(STATS_KEY);
+    if (!raw) return emptyStats();
+    var obj = JSON.parse(raw);
+    if (!obj || obj.version !== 1 || !obj.players) return emptyStats();
+    return obj;
+  } catch (e) { return emptyStats(); }
+}
+
+function writeStats(stats) {
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+}
+
+function clearStats() {
+  var n = Object.keys(loadStats().players).length;
+  try { localStorage.removeItem(STATS_KEY); } catch (e) {}
+  return n;
+}
+
+/* 名簿の改名を記録側にも反映する（記録そのものは動かさない） */
+function syncStatsNames(list) {
+  var stats = loadStats();
+  var changed = false;
+  (list || []).forEach(function (p) {
+    var rec = stats.players[p.id];
+    var name = (p.name || '').trim();
+    if (rec && name && rec.name !== name) { rec.name = name; changed = true; }
+  });
+  if (changed) writeStats(stats);
+}
+
+/* 1ゲーム分を加算する。
+   list は app.js の buildRanking() が返す [{id,name,answer,draw,total}]。
+   呼び出しは showResult() の1回だけ（State.statsCommitted で二重加算を止める）。 */
+function commitVsStats(list) {
+  if (!list || !list.length) return;
+  var stats = loadStats();
+  var now = Date.now();
+
+  var maxTotal = 0;
+  list.forEach(function (e) { if (e.total > maxTotal) maxTotal = e.total; });
+
+  list.forEach(function (e) {
+    // 「すぐに始める」の仮 ID（__quick__）は名簿に無いので記録しない
+    if (!e.id || e.id === '__quick__') return;
+    var rec = stats.players[e.id];
+    if (!rec) rec = stats.players[e.id] = { name: '', answer: 0, draw: 0, games: 0, wins: 0, lastAt: 0 };
+    rec.name = e.name || rec.name || '名無し';
+    rec.answer += e.answer;
+    rec.draw += e.draw;
+    rec.games += 1;
+    // 0 点どうしの並びで全員を勝者にしないよう、1 点以上の1位だけ勝利とする
+    if (maxTotal > 0 && e.total === maxTotal) rec.wins += 1;
+    rec.lastAt = now;
+  });
+
+  writeStats(stats);
+}
+
+/* 累積ランキング画面が使う形に展開する（S5 の renderRankList と同じキー名にそろえる） */
+function statsRanking() {
+  var stats = loadStats();
+  return Object.keys(stats.players).map(function (id) {
+    var r = stats.players[id];
+    return {
+      id: id,
+      name: r.name || '名無し',
+      remote: false,
+      answer: r.answer || 0,
+      draw: r.draw || 0,
+      total: (r.answer || 0) + (r.draw || 0),
+      games: r.games || 0,
+      wins: r.wins || 0,
+      lastAt: r.lastAt || 0
+    };
+  });
 }
